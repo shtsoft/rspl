@@ -1,0 +1,11 @@
+[package]
+name = "rspl"
+version = "0.1.0"
+edition = "2021"
+description = "A stream processor language."
+documentation = "https://docs.rs/rspl"
+readme = "README.md"
+repository = "https://github.com/aronpaulson/rspl"
+license = "GPL-3.0-or-later"
+
+[dependencies]
