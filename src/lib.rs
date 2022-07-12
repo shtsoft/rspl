@@ -1,39 +1,57 @@
 mod streams {
-    pub enum Stream<X> {
-        Cons(X, Box<dyn FnOnce() -> Stream<X>>),
+    pub trait Stream<X>
+    where
+        X: Copy,
+    {
+        fn head(&self) -> X;
+        fn tail(self) -> Self;
     }
 
-    impl<X> Stream<X> {
-        pub fn split(self) -> (X, Stream<X>) {
+    pub enum InfiniteList<X> {
+        Cons(X, Box<dyn FnOnce() -> InfiniteList<X>>),
+    }
+
+    impl<X> Stream<X> for InfiniteList<X>
+    where
+        X: Copy,
+    {
+        fn head(&self) -> X {
             match self {
-                Stream::Cons(head, tail) => (head, tail()),
+                InfiniteList::Cons(head, _) => *head,
             }
         }
 
+        fn tail(self) -> Self {
+            match self {
+                InfiniteList::Cons(_, tail) => tail(),
+            }
+        }
+    }
+
+    impl<X> InfiniteList<X> {
         pub fn print(self, n: usize) -> Self
         where
-            X: std::fmt::Display,
+            X: std::fmt::Display + Copy + 'static,
         {
             if n == 0 {
                 return self;
             }
-            let (head, tail) = Stream::split(self);
-            println!("{}", head);
-            Stream::print(tail, n - 1)
+            println!("{}", self.head());
+            InfiniteList::print(self.tail(), n - 1)
         }
     }
 
-    impl<X> Stream<X> {
-        pub fn constant(x: X) -> Stream<X>
+    impl<X> InfiniteList<X> {
+        pub fn constant(x: X) -> InfiniteList<X>
         where
             X: Copy + 'static,
         {
-            Stream::Cons(x, Box::new(move || Stream::constant(x)))
+            InfiniteList::Cons(x, Box::new(move || InfiniteList::constant(x)))
         }
     }
 }
 
-pub use streams::Stream;
+pub use streams::{InfiniteList, Stream};
 
 pub enum StreamProcessor<A, B> {
     Get(Box<dyn FnOnce(A) -> StreamProcessor<A, B>>),
@@ -50,17 +68,16 @@ where
     }))
 }
 
-pub fn eval<A, B>(sp: StreamProcessor<A, B>, stream: Stream<A>) -> Stream<B>
+pub fn eval<A, B, S>(sp: StreamProcessor<A, B>, stream: S) -> InfiniteList<B>
 where
-    A: 'static,
+    A: Copy + 'static,
     B: 'static,
+    S: Stream<A> + 'static,
 {
     match sp {
-        StreamProcessor::Get(f) => match stream {
-            Stream::Cons(head, tail) => eval(f(head), tail()),
-        },
+        StreamProcessor::Get(f) => eval(f(stream.head()), stream.tail()),
         StreamProcessor::Put(b, lazy_sp) => {
-            Stream::Cons(b, Box::new(move || eval(lazy_sp(), stream)))
+            InfiniteList::Cons(b, Box::new(move || eval(lazy_sp(), stream)))
         }
     }
 }
@@ -77,13 +94,13 @@ mod tests {
         n * 2
     }
 
-    fn ascending(n: usize) -> Stream<usize> {
-        Stream::Cons(n, Box::new(move || ascending(n + 1)))
+    fn ascending(n: usize) -> InfiniteList<usize> {
+        InfiniteList::Cons(n, Box::new(move || ascending(n + 1)))
     }
 
     #[test]
     fn it_works() {
-        let result = eval(map(negate), eval(map(negate), Stream::constant(true)));
+        let result = eval(map(negate), eval(map(negate), InfiniteList::constant(true)));
         result.print(10);
         //assert_eq!(result, ...);
 
