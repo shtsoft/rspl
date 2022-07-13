@@ -58,16 +58,6 @@ pub enum StreamProcessor<A, B> {
     Put(B, Box<dyn FnOnce() -> StreamProcessor<A, B>>),
 }
 
-pub fn map<A, B>(f: fn(A) -> B) -> StreamProcessor<A, B>
-where
-    A: 'static,
-    B: 'static,
-{
-    StreamProcessor::Get(Box::new(move |a: A| {
-        StreamProcessor::Put(f(a), Box::new(move || map(f)))
-    }))
-}
-
 pub fn eval<A, B, S>(sp: StreamProcessor<A, B>, stream: S) -> InfiniteList<B>
 where
     A: Copy + 'static,
@@ -80,6 +70,17 @@ where
             InfiniteList::Cons(b, Box::new(move || eval(lazy_sp(), stream)))
         }
     }
+}
+
+
+pub fn map<A, B>(f: fn(A) -> B) -> StreamProcessor<A, B>
+where
+    A: 'static,
+    B: 'static,
+{
+    StreamProcessor::Get(Box::new(move |a: A| {
+        StreamProcessor::Put(f(a), Box::new(move || map(f)))
+    }))
 }
 
 #[cfg(test)]
