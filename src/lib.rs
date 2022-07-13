@@ -29,15 +29,16 @@ mod streams {
     }
 
     impl<X> InfiniteList<X> {
-        pub fn print(self, n: usize) -> Self
+        pub fn print(mut self, n: usize) -> Self
         where
             X: std::fmt::Display + Copy + 'static,
         {
-            if n == 0 {
-                return self;
+            for _ in 0..n {
+                println!("{}", self.head());
+                self = self.tail();
             }
-            println!("{}", self.head());
-            InfiniteList::print(self.tail(), n - 1)
+
+            self
         }
     }
 
@@ -71,7 +72,6 @@ where
         }
     }
 }
-
 
 pub fn map<A, B>(f: fn(A) -> B) -> StreamProcessor<A, B>
 where
