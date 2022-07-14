@@ -7,8 +7,11 @@ mod streams {
         fn tail(self) -> Self;
     }
 
+    /// [`Lazy<T>`] types thunks of type `T`.
+    type Lazy<T> = dyn FnOnce() -> T;
+
     pub enum InfiniteList<X> {
-        Cons(X, Box<dyn FnOnce() -> InfiniteList<X>>),
+        Cons(X, Box<Lazy<InfiniteList<X>>>),
     }
 
     impl<X> Stream<X> for InfiniteList<X>
@@ -54,9 +57,12 @@ mod streams {
 
 pub use streams::{InfiniteList, Stream};
 
+/// [`Lazy<T>`] types thunks of type `T`.
+type Lazy<T> = dyn FnOnce() -> T;
+
 pub enum StreamProcessor<A, B> {
     Get(Box<dyn FnOnce(A) -> StreamProcessor<A, B>>),
-    Put(B, Box<dyn FnOnce() -> StreamProcessor<A, B>>),
+    Put(B, Box<Lazy<StreamProcessor<A, B>>>),
 }
 
 pub fn eval<A, B, S>(sp: StreamProcessor<A, B>, stream: S) -> InfiniteList<B>
