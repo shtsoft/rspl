@@ -1,4 +1,82 @@
+//! rspl is a stream processor language based on [Hancock et al.](https://arxiv.org/pdf/0905.4813) using rust as meta-language.
+//!
+//! ## Design
+//!
+//! The idea of this stream processor language is to split the processing of streams into two parts:
+//! One part for reading (getting) the first element of an input stream to decide what to do with the rest of that input stream depending on that element.
+//! Another part for writing (putting) something to the output stream and offering to process some input stream if needed.
+//! Combining these parts in various ways allows to flexibly construct stream processors as programs comprising a generalization of the well-known map-function on lists from functional programming.
+//!
+//! The following graphic illustrates how the two different kinds of stream processors ('getting' and 'putting') work:
+//!
+//! <pre>
+//! h--t1--t2--t3--...          ha--t1--t2--t3--...
+//! -                           -
+//! |                           |
+//! | Get(h |-> [SP](h))        | Put(hb, LAZY-[SP])
+//! |                           |
+//! v                           |
+//! t1--t2--t3--...             |   t1--t2--t3--...
+//! -                           |   -
+//! |                           v   |
+//! | [SP](h)                   hb--| LAZY-[SP]
+//! |                               |
+//! v                               v
+//! ...                             ...
+//! </pre>
+//!
+//! ## Usage
+//!
+//! To program a rspl-[`StreamProcessor`] you can just combine existing ones (perhaps obtained using [`map`]) by using the stream processor constructors [`StreamProcessor::Get`] and [`StreamProcessor::Put`].
+//! The program can then be evaluated with [`eval`] on some kind of input stream [`Stream`].
+//! For the type of the input stream you can either use [`InfiniteList`] or implement the [`Stream`]-interface yourself e.g. as some kind of queue.
+//! For the former there are some pre-defined stream constructors like [`InfiniteList::constant`]-constructor.
+//! As result, [`eval`] produces an [`InfiniteList`].
+//! To observe this infinite list you can destruct it yourself with [`Stream::head`] and [`Stream::tail`] or use methods like the [`InfiniteList::print`]-method.
+//!
+//! # Examples
+//!
+//! Encoding and (abstract) lazy event loop as stream processor:
+//!
+//! ```
+//! use rspl::{eval, StreamProcessor};
+//!
+//! #[derive(Copy)]
+//! #[derive(Clone)]
+//! enum Event {
+//!     Event,
+//! }
+//!
+//! enum State {
+//!     Hello,
+//!     World,
+//! }
+//!
+//! fn print_and_flip(_: Event, state: State) -> (Box<dyn FnOnce()>, State) {
+//!     match state {
+//!         State::Hello => (Box::new(|| println!("Hello")), State::World),
+//!         State::World => (Box::new(|| println!("World")), State::Hello),
+//!     }
+//! }
+//!
+//! fn event_processor(state: State) -> StreamProcessor<Event, ()> {
+//!     StreamProcessor::Get(Box::new(move |event: Event| {
+//!         let (action, new_state) = print_and_flip(event, state);
+//!         StreamProcessor::Put(action(), Box::new(move || event_processor(new_state)))
+//!     }))
+//! }
+//!
+//! let events = rspl::InfiniteList::constant(Event::Event);
+//!
+//! let initial_state = State::Hello;
+//!
+//! let _lazy_event_loop = eval(event_processor(initial_state), events);
+//! ```
+
 mod streams {
+    //! This module defines streams of some type extensionally as a trait and provides the standard implementation of this interface as infinite lists (the greatest fixpoint of `cons`ing).
+    //! Moreover it contains implementations to destruct and construct such infinite lists.
+
     /// A characterization of streams of some type `X`: a stream of `X` is an object from which one can observe something of type `X` (the head of the stream) or another stream of `X` (the tail of the stream).
     pub trait Stream<X>
     where
