@@ -1,11 +1,11 @@
-# poolio
+# rspl
 
-#[![crates.io][crates-badge]][crates-url]
+[![crates.io][crates-badge]][crates-url]
 [![GPL licensed][license-badge]][license-url]
 [![CI][actions-badge]][actions-url]
 
-#[crates-badge]: https://img.shields.io/crates/v/rspl.svg
-#[crates-url]: https://crates.io/crates/rspl
+[crates-badge]: https://img.shields.io/crates/v/rspl.svg
+[crates-url]: https://crates.io/crates/rspl
 [license-badge]: https://img.shields.io/badge/license-GPL-blue.svg
 [license-url]: ./Cargo.toml
 [actions-badge]: https://github.com/aronpaulson/rspl/actions/workflows/ci.yaml/badge.svg

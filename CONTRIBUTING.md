@@ -1,4 +1,4 @@
-# Contributing to poolio
+# Contributing to rspl
 
 Contributions are welcome!
 But please read this guide before.
