@@ -104,7 +104,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --all --tests --all-features
+          args: --all --benches --examples --tests --all-features
 
   docs:
     name: docs
