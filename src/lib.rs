@@ -104,14 +104,14 @@ mod streams {
         /// Make the first list enrty of `self` the head.
         fn head(&self) -> X {
             match self {
-                InfiniteList::Cons(head, _) => *head,
+                Self::Cons(head, _) => *head,
             }
         }
 
         /// Make all but the first list entry of `self` the tail.
         fn tail(self) -> Self {
             match self {
-                InfiniteList::Cons(_, tail) => tail(),
+                Self::Cons(_, tail) => tail(),
             }
         }
     }
@@ -157,11 +157,11 @@ mod streams {
         /// ```
         /// let trues = rspl::InfiniteList::constant(true);
         /// ```
-        pub fn constant(x: X) -> InfiniteList<X>
+        pub fn constant(x: X) -> Self
         where
             X: Copy + 'static,
         {
-            InfiniteList::Cons(x, Box::new(move || InfiniteList::constant(x)))
+            Self::Cons(x, Box::new(move || Self::constant(x)))
         }
     }
 }
@@ -252,11 +252,11 @@ where
 mod tests {
     use super::*;
 
-    fn negate(b: bool) -> bool {
+    const fn negate(b: bool) -> bool {
         !b
     }
 
-    fn times_two(n: usize) -> usize {
+    const fn times_two(n: usize) -> usize {
         n * 2
     }
 
