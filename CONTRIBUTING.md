@@ -13,7 +13,7 @@ Pay attention to security, usability, maintainability and performance (roughly i
 Generally, try to adhere to the coding-style of the current implementation to keep reading the code easy.
 Specifically,
 - make sure that the code is formatted correctly by running `cargo fmt --all -- --check`.
-- make sure that the linter does not complain too much by running `cargo clippy --all --benches --examples --tests --all-features`.
+- make sure that the linter does not complain too much by running `cargo clippy --all --benches --examples --tests --all-features` followed by `-- -W clippy::pedantic` or `-- -W clippy::nursery` if output will be interpreted very carefully.
 
 ### Documentation
 
