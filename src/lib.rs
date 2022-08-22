@@ -164,6 +164,61 @@ mod streams {
             Self::Cons(x, Box::new(move || Self::constant(x)))
         }
     }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn test_head() {
+            let inflist = InfiniteList::Cons(true, Box::new(move || InfiniteList::constant(false)));
+            assert!(inflist.head());
+        }
+
+        #[test]
+        fn test_tail() {
+            let inflist = InfiniteList::Cons(
+                false,
+                Box::new(move || {
+                    InfiniteList::Cons(true, Box::new(move || InfiniteList::constant(true)))
+                }),
+            );
+            assert!(inflist.tail().head());
+        }
+
+        #[test]
+        fn test_print() {
+            const N: usize = 2;
+
+            let stream = InfiniteList::Cons(
+                false,
+                Box::new(move || {
+                    InfiniteList::Cons(
+                        false,
+                        Box::new(move || {
+                            InfiniteList::Cons(true, Box::new(move || InfiniteList::constant(true)))
+                        }),
+                    )
+                }),
+            );
+
+            let stream = stream.print(N);
+            assert!(stream.head());
+        }
+
+        #[test]
+        fn test_constant() {
+            const X: usize = 0;
+            let xs = InfiniteList::constant(X);
+
+            let xs_head = xs.head();
+            assert_eq!(xs_head, X);
+
+            let xs = xs.tail();
+            let xs_head = xs.head();
+            assert_eq!(xs_head, X);
+        }
+    }
 }
 
 pub use streams::{InfiniteList, Stream};
@@ -252,12 +307,12 @@ where
 mod tests {
     use super::*;
 
-    const fn negate(b: bool) -> bool {
-        !b
+    const fn id<X>(x: X) -> X {
+        x
     }
 
-    const fn times_two(n: usize) -> usize {
-        n * 2
+    const fn successor(n: usize) -> usize {
+        n + 1
     }
 
     fn ascending(n: usize) -> InfiniteList<usize> {
@@ -265,13 +320,53 @@ mod tests {
     }
 
     #[test]
-    fn it_works() {
-        let result = eval(map(negate), eval(map(negate), InfiniteList::constant(true)));
-        result.print(10);
-        //assert_eq!(result, ...);
+    fn test_eval() {
+        const N: usize = 2;
 
-        let result = eval(map(times_two), ascending(0));
-        result.print(10);
-        //assert_eq!(result, ...);
+        let sp = StreamProcessor::Get(Box::new(move |n: usize| {
+            if n % 2 == 0 {
+                StreamProcessor::Put(
+                    n + N,
+                    Box::new(move || StreamProcessor::Put(n, Box::new(move || map(id)))),
+                )
+            } else {
+                StreamProcessor::Put(
+                    n - N,
+                    Box::new(move || StreamProcessor::Put(n, Box::new(move || map(id)))),
+                )
+            }
+        }));
+        let ns = InfiniteList::constant(N);
+        let stream = eval(sp, ns);
+
+        let stream_first = stream.head();
+        assert_eq!(stream_first, N + N);
+
+        let stream_second = stream.tail().head();
+        assert_eq!(stream_second, N);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_eval_panic() {
+        let sp = StreamProcessor::Get(Box::new(move |b: bool| {
+            StreamProcessor::Put(if b { panic!() } else { b }, Box::new(move || map(id)))
+        }));
+        let trues = InfiniteList::constant(true);
+        eval(sp, trues);
+    }
+
+    #[test]
+    fn test_map() {
+        let sp = map(successor);
+        let usizes = ascending(0);
+        let usizes_plus_one = eval(sp, usizes);
+
+        let one = usizes_plus_one.head();
+        assert_eq!(one, 1);
+
+        let usizes_plus_two = usizes_plus_one.tail();
+        let two = usizes_plus_two.head();
+        assert_eq!(two, 2);
     }
 }
