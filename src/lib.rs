@@ -32,7 +32,7 @@
 //! For the type of the input stream you can either use [`InfiniteList`] or implement the [`Stream`]-interface yourself e.g. as some kind of queue.
 //! For the former there are some pre-defined stream constructors like [`InfiniteList::constant`]-constructor.
 //! As result, [`eval`] produces an [`InfiniteList`].
-//! To observe this infinite list you can destruct it yourself with [`Stream::head`] and [`Stream::tail`] or use methods like the [`InfiniteList::print`]-method.
+//! To observe this infinite list you can destruct it yourself with [`Stream::head`] and [`Stream::tail`] or use functions like the [`streams::print`]-method.
 //!
 //! # Examples
 //!

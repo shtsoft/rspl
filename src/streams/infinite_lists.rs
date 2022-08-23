@@ -32,36 +32,6 @@ where
 }
 
 impl<X> InfiniteList<X> {
-    /// Print a specified number of entries of `self`.
-    /// - `n` is the number of entries to be printed.
-    ///
-    /// # Examples
-    ///
-    /// Printing the first five elements of the infinite list `0, 1, 2, ..., |usize|, 0, 1, ...`:
-    ///
-    /// ```
-    /// use rspl::InfiniteList;
-    ///
-    /// fn ascending(n: usize) -> InfiniteList<usize> {
-    ///     InfiniteList::Cons(n, Box::new(move || ascending(n + 1)))
-    /// }
-    ///
-    /// ascending(0).print(100);
-    /// ```
-    pub fn print(mut self, n: usize) -> Self
-    where
-        X: std::fmt::Display + Copy + 'static,
-    {
-        for _ in 0..n {
-            println!("{}", self.head());
-            self = self.tail();
-        }
-
-        self
-    }
-}
-
-impl<X> InfiniteList<X> {
     /// Create an infinte list of a certain constant.
     /// - `x` is the constant.
     ///
@@ -99,26 +69,6 @@ mod tests {
             }),
         );
         assert!(inflist.tail().head());
-    }
-
-    #[test]
-    fn test_print() {
-        const N: usize = 2;
-
-        let stream = InfiniteList::Cons(
-            false,
-            Box::new(move || {
-                InfiniteList::Cons(
-                    false,
-                    Box::new(move || {
-                        InfiniteList::Cons(true, Box::new(move || InfiniteList::constant(true)))
-                    }),
-                )
-            }),
-        );
-
-        let stream = stream.print(N);
-        assert!(stream.head());
     }
 
     #[test]
