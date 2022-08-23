@@ -27,8 +27,7 @@ where
     ///
     /// A panic is caused if receiving fails (probably due to a disconnected channel).
     fn tail(mut self) -> Self {
-        let x = self.receiver.recv().unwrap();
-        self.message = x;
+        self.message = self.receiver.recv().unwrap();
         self
     }
 }
