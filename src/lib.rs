@@ -28,10 +28,10 @@
 //! ## Usage
 //!
 //! To program a rspl-[`StreamProcessor`] you can just combine existing ones (perhaps obtained with [`map`]) by using the stream processor constructors [`StreamProcessor::Get`] and [`StreamProcessor::Put`].
-//! The program can then be evaluated with [`eval`] on some kind of input stream.
+//! The program can then be evaluated with [`StreamProcessor::eval`] on some kind of input stream.
 //! The 'kind' of input stream is either your own implementation of the [`Stream`]-interface or one
 //! from the submodules of the [`streams`]-module.
-//! Either way, as result, [`eval`] produces an [`InfiniteList`].
+//! Either way, as result, [`StreamProcessor::eval`] produces an [`InfiniteList`].
 //! To observe streams - and i.p. [`InfiniteList`]s - you can destruct them with [`Stream::head`] and [`Stream::tail`].
 //! Moreover there are various functions helping with the destruction and construction of streams.
 //!
@@ -40,7 +40,7 @@
 //! Encoding and (abstract) lazy event loop as stream processor:
 //!
 //! ```
-//! use rspl::{eval, StreamProcessor};
+//! use rspl::StreamProcessor;
 //!
 //! #[derive(Copy)]
 //! #[derive(Clone)]
@@ -71,7 +71,7 @@
 //!
 //! let initial_state = State::Hello;
 //!
-//! let _lazy_event_loop = eval(event_processor(initial_state), events);
+//! let _lazy_event_loop = event_processor(initial_state).eval(events);
 //! ```
 
 pub mod streams;
@@ -90,41 +90,42 @@ pub enum StreamProcessor<A, B> {
     Put(B, Box<Lazy<StreamProcessor<A, B>>>),
 }
 
-/// Evaluate a stream processor on an input stream essentially implementing a semantic of [`StreamProcessor<A, B>`].
-/// - `sp` is the stream processor (program).
-/// - `stream` is the input stream.
-///
-/// # Panics
-///
-/// A panic may occur if the stream processor contains rust-terms which can panic like e.g. function-calls which may panic.
-///
-/// # Examples
-///
-/// Negating a stream of `true`s to obtain a stream of `false`s:
-///
-/// ```
-/// use rspl::{eval, StreamProcessor};
-///
-/// fn negate() -> StreamProcessor<bool, bool> {
-///     StreamProcessor::Get(Box::new(move |b: bool| {
-///         StreamProcessor::Put(!b, Box::new(move || negate()))
-///     }))
-/// }
-///
-/// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
-///
-/// eval(negate(), trues);
-/// ```
-pub fn eval<A, B, S>(sp: StreamProcessor<A, B>, stream: S) -> InfiniteList<B>
-where
-    A: Copy + 'static,
-    B: 'static,
-    S: Stream<A> + 'static,
-{
-    match sp {
-        StreamProcessor::Get(f) => eval(f(stream.head()), stream.tail()),
-        StreamProcessor::Put(b, lazy_sp) => {
-            InfiniteList::Cons(b, Box::new(move || eval(lazy_sp(), stream)))
+impl<A, B> StreamProcessor<A, B> {
+    /// Evaluate `self` on an input stream essentially implementing a semantic of [`StreamProcessor<A, B>`].
+    /// - `stream` is the input stream.
+    ///
+    /// # Panics
+    ///
+    /// A panic may occur if the stream processor contains rust-terms which can panic like e.g. function-calls which may panic.
+    ///
+    /// # Examples
+    ///
+    /// Negating a stream of `true`s to obtain a stream of `false`s:
+    ///
+    /// ```
+    /// use rspl::StreamProcessor;
+    ///
+    /// fn negate() -> StreamProcessor<bool, bool> {
+    ///     StreamProcessor::Get(Box::new(move |b: bool| {
+    ///         StreamProcessor::Put(!b, Box::new(move || negate()))
+    ///     }))
+    /// }
+    ///
+    /// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
+    ///
+    /// negate().eval(trues);
+    /// ```
+    pub fn eval<S>(self, stream: S) -> InfiniteList<B>
+    where
+        A: Copy + 'static,
+        B: 'static,
+        S: Stream<A> + 'static,
+    {
+        match self {
+            StreamProcessor::Get(f) => Self::eval(f(stream.head()), stream.tail()),
+            StreamProcessor::Put(b, lazy_sp) => {
+                InfiniteList::Cons(b, Box::new(move || Self::eval(lazy_sp(), stream)))
+            }
         }
     }
 }
@@ -139,7 +140,7 @@ where
 /// Negating a stream of `true`s to obtain a stream of `false`s:
 ///
 /// ```
-/// use rspl::{eval, map, StreamProcessor};
+/// use rspl::{map, StreamProcessor};
 ///
 /// fn negate(b: bool) -> bool {
 ///     !b
@@ -147,7 +148,7 @@ where
 ///
 /// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
 ///
-/// eval(map(negate), trues);
+/// map(negate).eval(trues);
 /// ```
 pub fn map<A, B>(f: fn(A) -> B) -> StreamProcessor<A, B>
 where
@@ -191,7 +192,7 @@ mod tests {
             }
         }));
         let ns = InfiniteList::constant(N);
-        let stream = eval(sp, ns);
+        let stream = sp.eval(ns);
 
         let stream_first = stream.head();
         assert_eq!(stream_first, N + N);
@@ -207,7 +208,7 @@ mod tests {
             StreamProcessor::Put(if b { panic!() } else { b }, Box::new(move || map(id)))
         }));
         let trues = InfiniteList::constant(true);
-        eval(sp, trues);
+        sp.eval(trues);
     }
 
     #[test]
@@ -218,7 +219,7 @@ mod tests {
         tx.send(1).unwrap();
         tx.send(10).unwrap();
 
-        let result = eval(sp, stream);
+        let result = sp.eval(stream);
 
         let one = result.head();
         assert_eq!(one, 1);
