@@ -1,5 +1,5 @@
 //! This module defines streams of some type extensionally by means of a trait.
-//! Additionally, it declares modules with implementations of the trait and re-exports the name of the implementation.
+//! Additionally, the module declares submodules with implementations of the trait.
 
 pub mod infinite_lists;
 pub mod overeager_receivers;
@@ -15,7 +15,7 @@ where
     fn tail(self) -> Self;
 }
 
-/// Print a specified number of elements from some stream returning the not printed part.
+/// Print a specified number of elements from some provided stream returning the not printed part.
 /// - `stream` is the stream to be printed.
 /// - `n` is the number of elements to be printed.
 ///
@@ -28,13 +28,13 @@ where
 /// Printing the first five elements of the infinite list `0, 1, 2, ..., |usize|, 0, 1, ...`:
 ///
 /// ```
-/// use rspl::{InfiniteList, print};
+/// use rspl::streams::infinite_lists::InfiniteList;
 ///
 /// fn ascending(n: usize) -> InfiniteList<usize> {
 ///     InfiniteList::Cons(n, Box::new(move || ascending(n + 1)))
 /// }
 ///
-/// print(ascending(0), 5);
+/// rspl::streams::print(ascending(0), 5);
 /// ```
 pub fn print<X, S>(mut stream: S, n: usize) -> S
 where

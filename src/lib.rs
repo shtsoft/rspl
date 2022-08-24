@@ -27,12 +27,13 @@
 //!
 //! ## Usage
 //!
-//! To program a rspl-[`StreamProcessor`] you can just combine existing ones (perhaps obtained using [`map`]) by using the stream processor constructors [`StreamProcessor::Get`] and [`StreamProcessor::Put`].
-//! The program can then be evaluated with [`eval`] on some kind of input stream [`Stream`].
-//! For the type of the input stream you can either use [`InfiniteList`] or implement the [`Stream`]-interface yourself e.g. as some kind of queue.
-//! For the former there are some pre-defined stream constructors like [`InfiniteList::constant`]-constructor.
-//! As result, [`eval`] produces an [`InfiniteList`].
-//! To observe this infinite list you can destruct it yourself with [`Stream::head`] and [`Stream::tail`] or use functions like the [`streams::print`]-method.
+//! To program a rspl-[`StreamProcessor`] you can just combine existing ones (perhaps obtained with [`map`]) by using the stream processor constructors [`StreamProcessor::Get`] and [`StreamProcessor::Put`].
+//! The program can then be evaluated with [`eval`] on some kind of input stream.
+//! The 'kind' of input stream is either your own implementation of the [`Stream`]-interface or one
+//! from the submodules of the [`streams`]-module.
+//! Either way, as result, [`eval`] produces an [`InfiniteList`].
+//! To observe streams - and i.p. [`InfiniteList`]s - you can destruct them with [`Stream::head`] and [`Stream::tail`].
+//! Moreover there are various functions helping with the destruction and construction of streams.
 //!
 //! # Examples
 //!
@@ -66,7 +67,7 @@
 //!     }))
 //! }
 //!
-//! let events = rspl::InfiniteList::constant(Event::Event);
+//! let events = rspl::streams::infinite_lists::InfiniteList::constant(Event::Event);
 //!
 //! let initial_state = State::Hello;
 //!
@@ -75,17 +76,17 @@
 
 pub mod streams;
 
-use streams::Stream;
 use streams::infinite_lists::InfiniteList;
+use streams::Stream;
 
 /// [`Lazy<T>`] types thunks of type `T`.
 type Lazy<T> = dyn FnOnce() -> T;
 
 /// [`StreamProcessor<A, B>`] defines (the syntax of) a language describing the domain of stream processors, that is, terms which can be interpreted to turn streams of type `A` into streams of type `B`.
 pub enum StreamProcessor<A, B> {
-    /// Read the head `a` of the input stream and use `f(a)` to process the tail of the input stream.
+    /// This stream processor first reads the `A` from the head of the input stream. Then it applies the its function argument to it yielding a stream processor. This stream processor is then applied to the tail of the input stream.
     Get(Box<dyn FnOnce(A) -> StreamProcessor<A, B>>),
-    /// Write `b` to the output list and use the `lazy_stream_processor` to process the input stream if needed.
+    /// This stream processor writes the `B` from its first argument to the output list and use its second argument to process the input stream to generate the rest of the output list if needed.
     Put(B, Box<Lazy<StreamProcessor<A, B>>>),
 }
 
@@ -110,7 +111,7 @@ pub enum StreamProcessor<A, B> {
 ///     }))
 /// }
 ///
-/// let trues = rspl::InfiniteList::constant(true);
+/// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
 ///
 /// eval(negate(), trues);
 /// ```
@@ -128,7 +129,7 @@ where
     }
 }
 
-/// Construct the stream processor which applies a given function to each piece of the input stream.
+/// Construct the stream processor which applies a given function to each element of the input stream.
 /// - `f` is the function to be applied.
 ///
 /// The function is in analogy to the map-function on lists which is well-known in functional programming.
@@ -144,7 +145,7 @@ where
 ///     !b
 /// }
 ///
-/// let trues = rspl::InfiniteList::constant(true);
+/// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
 ///
 /// eval(map(negate), trues);
 /// ```

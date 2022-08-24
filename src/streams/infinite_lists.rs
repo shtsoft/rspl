@@ -1,5 +1,4 @@
 //! This module provides the standard implementation of streams as infinite lists (the greatest fixpoint of `cons`ing).
-//! Moreover it contains implementations to destruct and construct such infinite lists.
 
 use super::Stream;
 
@@ -8,7 +7,7 @@ type Lazy<T> = dyn FnOnce() -> T;
 
 /// [`InfiniteList<X>`] defines non-well-founded list of type `X`.
 pub enum InfiniteList<X> {
-    /// Constructing a new infinite list by prepending a new entry to an existing (lazy) inifinite list.
+    /// Constructing a new infinite list by prepending a new entry to an existing (lazy) infinite list.
     Cons(X, Box<Lazy<InfiniteList<X>>>),
 }
 
@@ -40,7 +39,7 @@ impl<X> InfiniteList<X> {
     /// Creating an infinite list of `true`s:
     ///
     /// ```
-    /// let trues = rspl::InfiniteList::constant(true);
+    /// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
     /// ```
     pub fn constant(x: X) -> Self
     where

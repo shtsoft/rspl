@@ -6,7 +6,7 @@ use super::Stream;
 use crossbeam::channel::{bounded, unbounded};
 use crossbeam::channel::{Receiver, Sender};
 
-/// [`OvereagerReceiver<X>`] abstracts receivers of message of type `X` which can buffer one message.
+/// [`OvereagerReceiver<X>`] abstracts receivers of messages of type `X` which always buffer one message.
 pub struct OvereagerReceiver<X> {
     /// overeagerly received message
     message: X,
@@ -18,14 +18,14 @@ impl<X> Stream<X> for OvereagerReceiver<X>
 where
     X: Copy,
 {
-    /// Make the overeagerly received part of `self` the head.
+    /// Make the message buffer of `self` the head.
     fn head(&self) -> X {
         self.message
     }
 
-    /// Updated the message-buffer of `self` with the next `self` can get and consider it the tail.
+    /// Make `self` with an updated message buffer the tail.
     ///
-    /// A panic is caused if receiving fails (probably due to a disconnected channel).
+    /// A panic is caused if receiving fails (due to a disconnected channel, probably).
     fn tail(mut self) -> Self {
         self.message = self.receiver.recv().unwrap();
         self
@@ -42,7 +42,7 @@ impl<X> OvereagerReceiver<X> {
     /// Creating a stream with head `true` and tail whatever is passed by `tx`:
     ///
     /// ```
-    /// let (tx, stream) = rspl::OvereagerReceiver::channel(0, true);
+    /// let (tx, stream) = rspl::streams::overeager_receivers::OvereagerReceiver::channel(0, true);
     /// ```
     pub fn channel(cap: usize, message: X) -> (Sender<X>, OvereagerReceiver<X>) {
         let (tx, receiver) = if cap > 0 { bounded(cap) } else { unbounded() };
