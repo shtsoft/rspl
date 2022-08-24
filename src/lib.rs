@@ -168,10 +168,6 @@ mod tests {
         n + 1
     }
 
-    fn ascending(n: usize) -> InfiniteList<usize> {
-        InfiniteList::Cons(n, Box::new(move || ascending(n + 1)))
-    }
-
     #[test]
     fn test_eval() {
         const N: usize = 2;
@@ -212,14 +208,17 @@ mod tests {
     #[test]
     fn test_map() {
         let sp = map(successor);
-        let usizes = ascending(0);
-        let usizes_plus_one = eval(sp, usizes);
 
-        let one = usizes_plus_one.head();
+        let (tx, stream) = OvereagerReceiver::channel(0, 0);
+        tx.send(1).unwrap();
+        tx.send(10).unwrap();
+
+        let result = eval(sp, stream);
+
+        let one = result.head();
         assert_eq!(one, 1);
 
-        let usizes_plus_two = usizes_plus_one.tail();
-        let two = usizes_plus_two.head();
+        let two = result.tail().head();
         assert_eq!(two, 2);
     }
 }

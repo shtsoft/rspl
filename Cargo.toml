@@ -11,3 +11,4 @@ keywords = ["language", "stream-processing", "streams", "events", "state-machine
 categories = ["asynchronous", "embedded"]
 
 [dependencies]
+crossbeam = "0.8"
