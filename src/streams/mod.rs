@@ -1,11 +1,8 @@
 //! This module defines streams of some type extensionally by means of a trait.
 //! Additionally, it declares modules with implementations of the trait and re-exports the name of the implementation.
 
-mod overeager_receivers;
-pub use overeager_receivers::OvereagerReceiver;
-
-mod infinite_lists;
-pub use infinite_lists::InfiniteList;
+pub mod infinite_lists;
+pub mod overeager_receivers;
 
 /// A characterization of streams of some type `X`: a stream of `X` is an object from which one can observe something of type `X` (the head of the stream) or another stream of `X` (the tail of the stream).
 pub trait Stream<X>
@@ -55,6 +52,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use infinite_lists::InfiniteList;
 
     #[test]
     fn test_print() {

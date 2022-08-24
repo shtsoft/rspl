@@ -73,8 +73,10 @@
 //! let _lazy_event_loop = eval(event_processor(initial_state), events);
 //! ```
 
-mod streams;
-pub use streams::*;
+pub mod streams;
+
+use streams::Stream;
+use streams::infinite_lists::InfiniteList;
 
 /// [`Lazy<T>`] types thunks of type `T`.
 type Lazy<T> = dyn FnOnce() -> T;
@@ -159,6 +161,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use streams::infinite_lists::InfiniteList;
+    use streams::overeager_receivers::OvereagerReceiver;
 
     const fn id<X>(x: X) -> X {
         x
