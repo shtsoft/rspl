@@ -44,9 +44,9 @@ impl<X> OvereagerReceiver<X> {
     /// ```
     /// let (tx, stream) = rspl::streams::overeager_receivers::OvereagerReceiver::channel(0, true);
     /// ```
-    pub fn channel(cap: usize, message: X) -> (Sender<X>, OvereagerReceiver<X>) {
+    pub fn channel(cap: usize, message: X) -> (Sender<X>, Self) {
         let (tx, receiver) = if cap > 0 { bounded(cap) } else { unbounded() };
-        (tx, OvereagerReceiver { message, receiver })
+        (tx, Self { message, receiver })
     }
 }
 
