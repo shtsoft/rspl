@@ -130,8 +130,8 @@ impl<A, B> StreamProcessor<A, B> {
     }
 }
 
-/// Construct the stream processor which applies a given function to each element of the input stream.
-/// - `f` is the function to be applied.
+/// Construct the stream processor which applies a given closure to each element of the input stream.
+/// - `f` is the closure to be applied.
 ///
 /// The function is in analogy to the map-function on lists which is well-known in functional programming.
 ///
@@ -150,10 +150,11 @@ impl<A, B> StreamProcessor<A, B> {
 ///
 /// map(negate).eval(trues);
 /// ```
-pub fn map<A, B>(f: fn(A) -> B) -> StreamProcessor<A, B>
+pub fn map<A, B, F>(f: F) -> StreamProcessor<A, B>
 where
     A: 'static,
     B: 'static,
+    F: FnOnce(A) -> B + Copy + 'static,
 {
     StreamProcessor::Get(Box::new(move |a: A| {
         StreamProcessor::Put(f(a), Box::new(move || map(f)))
@@ -168,10 +169,6 @@ mod tests {
 
     const fn id<X>(x: X) -> X {
         x
-    }
-
-    const fn successor(n: usize) -> usize {
-        n + 1
     }
 
     #[test]
@@ -213,7 +210,7 @@ mod tests {
 
     #[test]
     fn test_map() {
-        let sp = map(successor);
+        let sp = map(|n: usize| n + 1);
 
         let (tx, stream) = OvereagerReceiver::channel(0, 0);
         tx.send(1).unwrap();
