@@ -1,5 +1,5 @@
 <!--
-Your pull request is greatly appreciated but please consult https://github.com/aron_paulson/poolio/blob/master/CONTRIBUTING.md before making one.
+Your pull request is greatly appreciated but please consult https://github.com/aron_paulson/rspl/blob/master/CONTRIBUTING.md before making one.
 -->
 
 ## What
