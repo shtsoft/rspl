@@ -3,15 +3,15 @@
 use super::Stream;
 
 /// [`Lazy<T>`] types thunks of type `T`.
-type Lazy<T> = dyn FnOnce() -> T;
+type Lazy<'a, T> = dyn FnOnce() -> T + 'a;
 
 /// [`InfiniteList<X>`] defines non-well-founded list of type `X`.
-pub enum InfiniteList<X> {
+pub enum InfiniteList<'a, X: 'a> {
     /// Constructing a new infinite list by prepending a new entry to an existing (lazy) infinite list.
-    Cons(X, Box<Lazy<InfiniteList<X>>>),
+    Cons(X, Box<Lazy<'a, InfiniteList<'a, X>>>),
 }
 
-impl<X> Stream<X> for InfiniteList<X>
+impl<'a, X> Stream<X> for InfiniteList<'a, X>
 where
     X: Copy,
 {
@@ -30,7 +30,7 @@ where
     }
 }
 
-impl<X> InfiniteList<X> {
+impl<'a, X> InfiniteList<'a, X> {
     /// Create an infinte list of a certain constant.
     /// - `x` is the constant.
     ///
@@ -43,7 +43,7 @@ impl<X> InfiniteList<X> {
     /// ```
     pub fn constant(x: X) -> Self
     where
-        X: Copy + 'static,
+        X: Copy,
     {
         Self::Cons(x, Box::new(move || Self::constant(x)))
     }
@@ -55,7 +55,7 @@ mod tests {
 
     #[test]
     fn test_head() {
-        let inflist = InfiniteList::Cons(true, Box::new(move || InfiniteList::constant(false)));
+        let inflist = InfiniteList::Cons(true, Box::new(|| InfiniteList::constant(false)));
         assert!(inflist.head());
     }
 
@@ -63,9 +63,7 @@ mod tests {
     fn test_tail() {
         let inflist = InfiniteList::Cons(
             false,
-            Box::new(move || {
-                InfiniteList::Cons(true, Box::new(move || InfiniteList::constant(true)))
-            }),
+            Box::new(|| InfiniteList::Cons(true, Box::new(|| InfiniteList::constant(true)))),
         );
         assert!(inflist.tail().head());
     }

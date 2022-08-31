@@ -60,7 +60,7 @@
 //!     }
 //! }
 //!
-//! fn event_processor(state: State) -> StreamProcessor<Event, ()> {
+//! fn event_processor<'a>(state: State) -> StreamProcessor<'a, Event, ()> {
 //!     StreamProcessor::Get(Box::new(move |event: Event| {
 //!         let (action, new_state) = print_and_flip(event, state);
 //!         StreamProcessor::Put(action(), Box::new(move || event_processor(new_state)))
@@ -80,17 +80,17 @@ use streams::infinite_lists::InfiniteList;
 use streams::Stream;
 
 /// [`Lazy<T>`] types thunks of type `T`.
-type Lazy<T> = dyn FnOnce() -> T;
+type Lazy<'a, T> = dyn FnOnce() -> T + 'a;
 
 /// [`StreamProcessor<A, B>`] defines (the syntax of) a language describing the domain of stream processors, that is, terms which can be interpreted to turn streams of type `A` into streams of type `B`.
-pub enum StreamProcessor<A, B> {
+pub enum StreamProcessor<'a, A: 'a, B> {
     /// This stream processor first reads the `A` from the head of the input stream. Then it applies the its function argument to it yielding a stream processor. This stream processor is then applied to the tail of the input stream.
-    Get(Box<dyn FnOnce(A) -> StreamProcessor<A, B>>),
+    Get(Box<dyn FnOnce(A) -> StreamProcessor<'a, A, B> + 'a>),
     /// This stream processor writes the `B` from its first argument to the output list and use its second argument to process the input stream to generate the rest of the output list if needed.
-    Put(B, Box<Lazy<StreamProcessor<A, B>>>),
+    Put(B, Box<Lazy<'a, StreamProcessor<'a, A, B>>>),
 }
 
-impl<A, B> StreamProcessor<A, B> {
+impl<'a, A, B> StreamProcessor<'a, A, B> {
     /// Evaluate `self` on an input stream essentially implementing a semantic of [`StreamProcessor<A, B>`].
     /// - `stream` is the input stream.
     ///
@@ -105,9 +105,9 @@ impl<A, B> StreamProcessor<A, B> {
     /// ```
     /// use rspl::StreamProcessor;
     ///
-    /// fn negate() -> StreamProcessor<bool, bool> {
-    ///     StreamProcessor::Get(Box::new(move |b: bool| {
-    ///         StreamProcessor::Put(!b, Box::new(move || negate()))
+    /// fn negate<'a>() -> StreamProcessor<'a, bool, bool> {
+    ///     StreamProcessor::Get(Box::new(|b: bool| {
+    ///         StreamProcessor::Put(!b, Box::new(|| negate()))
     ///     }))
     /// }
     ///
@@ -115,16 +115,14 @@ impl<A, B> StreamProcessor<A, B> {
     ///
     /// negate().eval(trues);
     /// ```
-    pub fn eval<S>(self, stream: S) -> InfiniteList<B>
+    pub fn eval<S: Stream<A> + 'a>(self, stream: S) -> InfiniteList<'a, B>
     where
-        A: Copy + 'static,
-        B: 'static,
-        S: Stream<A> + 'static,
+        A: Copy,
     {
         match self {
             StreamProcessor::Get(f) => Self::eval(f(stream.head()), stream.tail()),
             StreamProcessor::Put(b, lazy_sp) => {
-                InfiniteList::Cons(b, Box::new(move || Self::eval(lazy_sp(), stream)))
+                InfiniteList::Cons(b, Box::new(|| Self::eval(lazy_sp(), stream)))
             }
         }
     }
@@ -150,14 +148,12 @@ impl<A, B> StreamProcessor<A, B> {
 ///
 /// map(negate).eval(trues);
 /// ```
-pub fn map<A, B, F>(f: F) -> StreamProcessor<A, B>
+pub fn map<'a, A, B, F>(f: F) -> StreamProcessor<'a, A, B>
 where
-    A: 'static,
-    B: 'static,
-    F: FnOnce(A) -> B + Copy + 'static,
+    F: Fn(A) -> B + 'a,
 {
-    StreamProcessor::Get(Box::new(move |a: A| {
-        StreamProcessor::Put(f(a), Box::new(move || map(f)))
+    StreamProcessor::Get(Box::new(|a: A| {
+        StreamProcessor::Put(f(a), Box::new(|| map(f)))
     }))
 }
 
@@ -175,16 +171,16 @@ mod tests {
     fn test_eval() {
         const N: usize = 2;
 
-        let sp = StreamProcessor::Get(Box::new(move |n: usize| {
+        let sp = StreamProcessor::Get(Box::new(|n: usize| {
             if n % 2 == 0 {
                 StreamProcessor::Put(
                     n + N,
-                    Box::new(move || StreamProcessor::Put(n, Box::new(move || map(id)))),
+                    Box::new(move || StreamProcessor::Put(n, Box::new(|| map(id)))),
                 )
             } else {
                 StreamProcessor::Put(
                     n - N,
-                    Box::new(move || StreamProcessor::Put(n, Box::new(move || map(id)))),
+                    Box::new(move || StreamProcessor::Put(n, Box::new(|| map(id)))),
                 )
             }
         }));
@@ -201,8 +197,8 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_eval_panic() {
-        let sp = StreamProcessor::Get(Box::new(move |b: bool| {
-            StreamProcessor::Put(if b { panic!() } else { b }, Box::new(move || map(id)))
+        let sp = StreamProcessor::Get(Box::new(|b: bool| {
+            StreamProcessor::Put(if b { panic!() } else { b }, Box::new(|| map(id)))
         }));
         let trues = InfiniteList::constant(true);
         sp.eval(trues);

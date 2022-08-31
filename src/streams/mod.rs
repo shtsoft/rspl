@@ -30,7 +30,7 @@ where
 /// ```
 /// use rspl::streams::infinite_lists::InfiniteList;
 ///
-/// fn ascending(n: usize) -> InfiniteList<usize> {
+/// fn ascending<'a>(n: usize) -> InfiniteList<'a, usize> {
 ///     InfiniteList::Cons(n, Box::new(move || ascending(n + 1)))
 /// }
 ///
@@ -58,11 +58,11 @@ mod tests {
     fn test_print() {
         let stream = InfiniteList::Cons(
             false,
-            Box::new(move || {
+            Box::new(|| {
                 InfiniteList::Cons(
                     false,
-                    Box::new(move || {
-                        InfiniteList::Cons(true, Box::new(move || InfiniteList::constant(true)))
+                    Box::new(|| {
+                        InfiniteList::Cons(true, Box::new(|| InfiniteList::constant(true)))
                     }),
                 )
             }),
