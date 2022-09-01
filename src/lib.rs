@@ -117,7 +117,9 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
     ///
     /// # Panics
     ///
-    /// A panic may occur if the stream processor contains rust-terms which can panic like e.g. function-calls which may panic.
+    /// A panic may occur if
+    /// - the stream processor contains rust-terms which can panic.
+    /// - the respective implementation of [`Stream::head`] or [`Stream::tail`] can panic.
     ///
     /// # Examples
     ///
