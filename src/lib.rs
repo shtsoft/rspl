@@ -37,41 +37,62 @@
 //!
 //! # Examples
 //!
-//! Encoding and (abstract) lazy event loop as stream processor:
+//! rspl can serve as a framework for the nifty idea of event-driven programming with finite state machines as suggested [here](https://barrgroup.com/Embedded-Systems/How-To/State-Machines-Event-Driven-Systems). The example for the pattern there is implemented concretely as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/events.rs) for rspl and abstractly in the following to demonstrate the [usage](#usage) of rspl:
 //!
 //! ```
+//! use rspl::streams::overeager_receivers::OvereagerReceiver;
+//! use rspl::streams::Stream;
 //! use rspl::StreamProcessor;
 //!
-//! #[derive(Copy)]
-//! #[derive(Clone)]
+//! #[derive(Copy, Clone)]
 //! enum Event {
-//!     Event,
+//!     Event1,
+//!     Event2,
 //! }
 //!
-//! enum State {
-//!     Hello,
-//!     World,
+//! fn action() -> bool {
+//!     true
 //! }
 //!
-//! fn print_and_flip(_: Event, state: State) -> (Box<dyn FnOnce()>, State) {
-//!     match state {
-//!         State::Hello => (Box::new(|| println!("Hello")), State::World),
-//!         State::World => (Box::new(|| println!("World")), State::Hello),
+//! fn state_1<'a>() -> StreamProcessor<'a, Event, bool> {
+//!     fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
+//!         match event {
+//!             Event::Event1 => StreamProcessor::Put(action(), Box::new(state_1)),
+//!             Event::Event2 => state_2(),
+//!         }
 //!     }
+//!
+//!     StreamProcessor::Get(Box::new(transition))
 //! }
 //!
-//! fn event_processor<'a>(state: State) -> StreamProcessor<'a, Event, ()> {
-//!     StreamProcessor::Get(Box::new(move |event: Event| {
-//!         let (action, new_state) = print_and_flip(event, state);
-//!         StreamProcessor::Put(action(), Box::new(move || event_processor(new_state)))
-//!     }))
+//! fn state_2<'a>() -> StreamProcessor<'a, Event, bool> {
+//!     fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
+//!         match event {
+//!             Event::Event1 => state_1(),
+//!             Event::Event2 => StreamProcessor::Put(false, Box::new(state_2)),
+//!         }
+//!     }
+//!
+//!     StreamProcessor::Get(Box::new(transition))
 //! }
 //!
-//! let events = rspl::streams::infinite_lists::InfiniteList::constant(Event::Event);
+//! struct Initial<'a, A, B> {
+//!     state: StreamProcessor<'a, A, B>,
+//!     event: Event,
+//! }
 //!
-//! let initial_state = State::Hello;
+//! let initial = Initial {
+//!     state: state_1(),
+//!     event: Event::Event1,
+//! };
 //!
-//! let _lazy_event_loop = event_processor(initial_state).eval(events);
+//! let (tevents, events) = OvereagerReceiver::channel(0, initial.event);
+//!
+//! tevents.send(Event::Event2).unwrap();
+//!
+//! let event_loop_body = initial.state.eval(events);
+//!
+//! assert!(event_loop_body.head());
 //! ```
 
 pub mod streams;
