@@ -14,13 +14,10 @@ pub struct OvereagerReceiver<X> {
     receiver: Receiver<X>,
 }
 
-impl<X> Stream<X> for OvereagerReceiver<X>
-where
-    X: Copy,
-{
+impl<X> Stream<X> for OvereagerReceiver<X> {
     /// Make the message buffer of `self` the head.
-    fn head(&self) -> X {
-        self.message
+    fn head(&self) -> &X {
+        &self.message
     }
 
     /// Blocks the current thread until it can make `self` with an updated message buffer the tail.

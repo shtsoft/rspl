@@ -58,7 +58,7 @@ fn test_events() {
     {
         let mut n = 0;
 
-        while body.head() {
+        while *body.head() {
             body = body.tail();
             n += 1;
         }

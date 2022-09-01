@@ -5,12 +5,9 @@ pub mod infinite_lists;
 pub mod overeager_receivers;
 
 /// A characterization of streams of some type `X`: a stream of `X` is an object from which one can observe something of type `X` (the head of the stream) or another stream of `X` (the tail of the stream).
-pub trait Stream<X>
-where
-    X: Copy,
-{
-    /// Copy the first item of `self` and return that copy.
-    fn head(&self) -> X;
+pub trait Stream<X> {
+    /// Return a reference to the first item of `self`.
+    fn head(&self) -> &X;
     /// Throw away the first item of `self` and return what is left.
     fn tail(self) -> Self;
 }
@@ -41,7 +38,7 @@ where
 pub fn print<X, S>(mut stream: S, n: usize) -> S
 where
     S: Stream<X>,
-    X: std::fmt::Display + Copy,
+    X: std::fmt::Display,
 {
     for _ in 0..n {
         println!("{}", stream.head());

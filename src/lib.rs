@@ -142,10 +142,10 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
     /// ```
     pub fn eval<S: Stream<A> + 'a>(self, stream: S) -> InfiniteList<'a, B>
     where
-        A: Copy,
+        A: Clone,
     {
         match self {
-            StreamProcessor::Get(f) => Self::eval(f(stream.head()), stream.tail()),
+            StreamProcessor::Get(f) => Self::eval(f(stream.head().clone()), stream.tail()),
             StreamProcessor::Put(b, lazy_sp) => {
                 InfiniteList::Cons(b, Box::new(|| Self::eval(lazy_sp(), stream)))
             }
@@ -211,12 +211,10 @@ mod tests {
         }));
         let ns = InfiniteList::constant(N);
         let stream = sp.eval(ns);
+        assert_eq!(*stream.head(), N + N);
 
-        let stream_first = stream.head();
-        assert_eq!(stream_first, N + N);
-
-        let stream_second = stream.tail().head();
-        assert_eq!(stream_second, N);
+        let stream_tail = stream.tail();
+        assert_eq!(*stream_tail.head(), N);
     }
 
     #[test]
@@ -238,11 +236,9 @@ mod tests {
         tx.send(10).unwrap();
 
         let result = sp.eval(stream);
+        assert_eq!(*result.head(), 1);
 
-        let one = result.head();
-        assert_eq!(one, 1);
-
-        let two = result.tail().head();
-        assert_eq!(two, 2);
+        let result_tail = result.tail();
+        assert_eq!(*result_tail.head(), 2);
     }
 }

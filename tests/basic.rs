@@ -27,19 +27,19 @@ fn test_basic() {
         let mut stream = ascending(1);
 
         for _ in 0..5 {
-            tx.send(stream.head()).unwrap();
+            tx.send(*stream.head()).unwrap();
             stream = stream.tail();
         }
     });
 
     let result = sp.eval(stream);
-    assert_eq!(result.head(), N);
+    assert_eq!(*result.head(), N);
 
     let result_tail = result.tail();
-    assert_eq!(result_tail.head(), N);
+    assert_eq!(*result_tail.head(), N);
 
     let rest = print(result_tail, 3);
-    assert_eq!(rest.head(), N * 4);
+    assert_eq!(*rest.head(), N * 4);
 
     fill_stream.join().unwrap();
 }

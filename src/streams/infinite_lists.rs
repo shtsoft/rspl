@@ -11,14 +11,11 @@ pub enum InfiniteList<'a, X: 'a> {
     Cons(X, Box<Lazy<'a, InfiniteList<'a, X>>>),
 }
 
-impl<'a, X> Stream<X> for InfiniteList<'a, X>
-where
-    X: Copy,
-{
+impl<'a, X> Stream<X> for InfiniteList<'a, X> {
     /// Make the first list enrty of `self` the head.
-    fn head(&self) -> X {
+    fn head(&self) -> &X {
         match self {
-            Self::Cons(head, _) => *head,
+            Self::Cons(head, _) => head,
         }
     }
 
@@ -70,14 +67,12 @@ mod tests {
 
     #[test]
     fn test_constant() {
-        const X: usize = 0;
+        const X: &usize = &0;
+
         let xs = InfiniteList::constant(X);
+        assert_eq!(*xs.head(), X);
 
-        let xs_head = xs.head();
-        assert_eq!(xs_head, X);
-
-        let xs = xs.tail();
-        let xs_head = xs.head();
-        assert_eq!(xs_head, X);
+        let xs_tail = xs.tail();
+        assert_eq!(*xs_tail.head(), X);
     }
 }
