@@ -14,6 +14,11 @@ fn test_events() {
         Key(u8),
     }
 
+    struct Initial<'a, A, B> {
+        state: StreamProcessor<'a, A, B>,
+        event: Event,
+    }
+
     fn key_action(sign: char, c: u8) -> bool {
         if c == 0 {
             false
@@ -47,44 +52,52 @@ fn test_events() {
         StreamProcessor::Get(Box::new(transition))
     }
 
-    let (tx, events) = OvereagerReceiver::channel(100, Event::ShiftReleased);
+    fn looping<S>(mut body: S) -> usize
+    where
+        S: Stream<bool>,
+    {
+        let mut n = 0;
+
+        while body.head() {
+            body = body.tail();
+            n += 1;
+        }
+
+        n
+    }
+
+    let initial = Initial {
+        state: default(),
+        event: Event::ShiftReleased,
+    };
+
+    let (tevents, events) = OvereagerReceiver::channel(100, initial.event);
 
     let input_simulator = thread::spawn(move || {
         let wait = || thread::sleep(Duration::from_millis(100));
-        tx.send(Event::Key(1)).unwrap();
-        wait();
-        tx.send(Event::ShiftDepressed).unwrap();
-        wait();
-        tx.send(Event::Key(1)).unwrap();
-        wait();
-        tx.send(Event::Key(5)).unwrap();
-        wait();
-        tx.send(Event::ShiftReleased).unwrap();
-        wait();
-        tx.send(Event::Key(5)).unwrap();
-        wait();
-        tx.send(Event::Key(7)).unwrap();
-        wait();
-        tx.send(Event::ShiftReleased).unwrap();
-        wait();
-        tx.send(Event::Key(3)).unwrap();
-        wait();
-        tx.send(Event::ShiftDepressed).unwrap();
-        wait();
-        tx.send(Event::Key(0)).unwrap();
-        tx.send(Event::Key(0)).unwrap();
+
+        let events = [
+            Event::Key(1),
+            Event::ShiftDepressed,
+            Event::Key(1),
+            Event::Key(5),
+            Event::ShiftReleased,
+            Event::Key(5),
+            Event::Key(7),
+            Event::ShiftReleased,
+            Event::Key(3),
+            Event::ShiftDepressed,
+            Event::Key(0),
+            Event::Key(0),
+        ];
+
+        for event in events {
+            tevents.send(event).unwrap();
+            wait();
+        }
     });
 
-    looping(default().eval(events));
+    assert_eq!(looping(initial.state.eval(events)), 9);
 
     input_simulator.join().unwrap();
-}
-
-fn looping<S>(mut body: S)
-where
-    S: Stream<bool>,
-{
-    while body.head() {
-        body = body.tail();
-    }
 }

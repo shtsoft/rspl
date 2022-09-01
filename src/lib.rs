@@ -50,6 +50,11 @@
 //!     Event2,
 //! }
 //!
+//! struct Initial<'a, A, B> {
+//!     state: StreamProcessor<'a, A, B>,
+//!     event: Event,
+//! }
+//!
 //! fn action() -> bool {
 //!     true
 //! }
@@ -74,11 +79,6 @@
 //!     }
 //!
 //!     StreamProcessor::Get(Box::new(transition))
-//! }
-//!
-//! struct Initial<'a, A, B> {
-//!     state: StreamProcessor<'a, A, B>,
-//!     event: Event,
 //! }
 //!
 //! let initial = Initial {
