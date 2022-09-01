@@ -9,18 +9,18 @@ use std::thread;
 fn test_basic() {
     const N: usize = 3;
 
-    let sp = StreamProcessor::Get(Box::new(move |n: usize| {
+    let sp = StreamProcessor::Get(Box::new(|n: usize| {
         if n % 2 == 0 {
-            StreamProcessor::Put(N, Box::new(move || map(|n| N * n)))
+            StreamProcessor::Put(N, Box::new(|| map(|n| N * n)))
         } else {
-            StreamProcessor::Put(N + 1, Box::new(move || map(|n| N * n + 1)))
+            StreamProcessor::Put(N + 1, Box::new(|| map(|n| N * n + 1)))
         }
     }));
 
     let (tx, stream) = OvereagerReceiver::channel(0, 0);
 
     let fill_stream = thread::spawn(move || {
-        fn ascending(n: usize) -> InfiniteList<usize> {
+        fn ascending<'a>(n: usize) -> InfiniteList<'a, usize> {
             InfiniteList::Cons(n, Box::new(move || ascending(n + 1)))
         }
 

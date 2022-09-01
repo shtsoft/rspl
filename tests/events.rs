@@ -23,8 +23,8 @@ fn test_events() {
         }
     }
 
-    fn default() -> StreamProcessor<Event, bool> {
-        fn transition(event: Event) -> StreamProcessor<Event, bool> {
+    fn default<'a>() -> StreamProcessor<'a, Event, bool> {
+        fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
             match event {
                 Event::ShiftDepressed => StreamProcessor::Put(true, Box::new(shifted)),
                 Event::ShiftReleased => default(),
@@ -35,8 +35,8 @@ fn test_events() {
         StreamProcessor::Get(Box::new(transition))
     }
 
-    fn shifted() -> StreamProcessor<Event, bool> {
-        fn transition(event: Event) -> StreamProcessor<Event, bool> {
+    fn shifted<'a>() -> StreamProcessor<'a, Event, bool> {
+        fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
             match event {
                 Event::ShiftDepressed => shifted(),
                 Event::ShiftReleased => StreamProcessor::Put(true, Box::new(default)),
