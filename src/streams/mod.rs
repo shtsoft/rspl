@@ -19,6 +19,8 @@ where
 /// - `stream` is the stream to be printed.
 /// - `n` is the number of elements to be printed.
 ///
+/// Note that the function can block the current thread if the respective implementation of [`Stream::tail`] can.
+///
 /// # Panics
 ///
 /// A panic is caused if the respective implementation of [`Stream::head`] or [`Stream::tail`] panics.

@@ -115,6 +115,8 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
     /// Evaluate `self` on an input stream essentially implementing a semantic of [`StreamProcessor<A, B>`].
     /// - `stream` is the input stream.
     ///
+    /// Note that the function can block the current thread if the respective implementation of [`Stream::tail`] can.
+    ///
     /// # Panics
     ///
     /// A panic may occur if

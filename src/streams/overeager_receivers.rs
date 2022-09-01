@@ -23,9 +23,11 @@ where
         self.message
     }
 
-    /// Make `self` with an updated message buffer the tail.
+    /// Blocks the current thread until it can make `self` with an updated message buffer the tail.
     ///
-    /// A panic is caused if receiving fails (due to a disconnected channel, probably).
+    /// # Panics
+    ///
+    /// A panic is caused if the channel becomes disconnected.
     fn tail(mut self) -> Self {
         self.message = self.receiver.recv().unwrap();
         self
