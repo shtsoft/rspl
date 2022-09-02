@@ -1,4 +1,4 @@
-use rspl::map;
+use rspl::combinators::map;
 use rspl::streams::overeager_receivers::OvereagerReceiver;
 use rspl::streams::print;
 

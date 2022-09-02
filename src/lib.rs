@@ -27,13 +27,13 @@
 //!
 //! ## Usage
 //!
-//! To program a rspl-[`StreamProcessor`] you can just combine existing ones (perhaps obtained with [`map`]) by using the stream processor constructors [`StreamProcessor::Get`] and [`StreamProcessor::Put`].
-//! (Note that there are methods [`StreamProcessor::get`] and [`StreamProcessor::put`] corresponding to the stream processor constructors which allow to write less verbose code.)
-//! The program can then be evaluated with [`StreamProcessor::eval`] on some kind of input stream.
+//! To program a rspl-[`StreamProcessor`] you just have to compose the constructors [`StreamProcessor::Get`]/[`get`](`StreamProcessor::get`) and [`StreamProcessor::Put`]/[`put`](`StreamProcessor::put`) in the right way.
+//! For a somewhat more high-level programming experience you might wish to look at the [`combinators`]-module.
+//! The program can then be evaluated with [`eval`](`StreamProcessor::eval`)-method on some kind of input stream.
 //! The 'kind' of input stream is either your own implementation of the [`Stream`]-interface or one
 //! from the submodules of the [`streams`]-module.
-//! Either way, as result, [`StreamProcessor::eval`] produces an [`InfiniteList`].
-//! To observe streams - and i.p. [`InfiniteList`]s - you can destruct them with [`Stream::head`] and [`Stream::tail`].
+//! Either way, as result, evaluation produces an [`InfiniteList`] (lazily).
+//! To observe streams - and i.p. infinite lists - you can destruct them with [`head`](`Stream::head`)- and [`tail`](`Stream::tail`)-methods of the stream interface.
 //! Moreover there are various functions helping with the destruction and construction of streams.
 //!
 //! # Examples
@@ -172,37 +172,67 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
     }
 }
 
-/// Construct the stream processor which applies a given closure to each element of the input stream.
-/// - `f` is the closure to be applied.
-///
-/// The function is in analogy to the map-function on lists which is well-known in functional programming.
-///
-/// # Examples
-///
-/// Negating a stream of `true`s to obtain a stream of `false`s:
-///
-/// ```
-/// use rspl::{map, StreamProcessor};
-///
-/// let negate = |b: bool| !b;
-///
-/// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
-///
-/// map(negate).eval(trues);
-/// ```
-pub fn map<'a, A, B, F>(f: F) -> StreamProcessor<'a, A, B>
-where
-    F: Fn(A) -> B + 'a,
-{
-    StreamProcessor::Get(Box::new(|a: A| {
-        StreamProcessor::Put(f(a), Box::new(|| map(f)))
-    }))
+pub mod combinators {
+    //! This module defines (parameterized) functions which combine existing stream processors into new ones.
+    //! In particular, there are nullary combinators to get writing a stream processor off the ground.
+
+    use super::StreamProcessor;
+
+    /// Construct the stream processor which applies a given closure to each element of the input stream.
+    /// - `f` is the closure to be applied.
+    ///
+    /// The function is in analogy to the map-function on lists which is well-known in functional programming.
+    ///
+    /// # Examples
+    ///
+    /// Negating a stream of `true`s to obtain a stream of `false`s:
+    ///
+    /// ```
+    /// use rspl::combinators::map;
+    /// use rspl::StreamProcessor;
+    ///
+    /// let negate = |b: bool| !b;
+    ///
+    /// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
+    ///
+    /// map(negate).eval(trues);
+    /// ```
+    pub fn map<'a, A, B, F>(f: F) -> StreamProcessor<'a, A, B>
+    where
+        F: Fn(A) -> B + 'a,
+    {
+        StreamProcessor::Get(Box::new(|a: A| {
+            StreamProcessor::Put(f(a), Box::new(|| map(f)))
+        }))
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+        use crate::streams::overeager_receivers::OvereagerReceiver;
+        use crate::streams::Stream;
+
+        #[test]
+        fn test_map() {
+            let sp = map(|n: usize| n + 1);
+
+            let (tx, stream) = OvereagerReceiver::channel(0, 0);
+            tx.send(1).unwrap();
+            tx.send(10).unwrap();
+
+            let result = sp.eval(stream);
+            assert_eq!(*result.head(), 1);
+
+            let result_tail = result.tail();
+            assert_eq!(*result_tail.head(), 2);
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use streams::infinite_lists::InfiniteList;
+    use combinators::map;
     use streams::overeager_receivers::OvereagerReceiver;
 
     const fn id<X>(x: X) -> X {
@@ -220,12 +250,16 @@ mod tests {
                 StreamProcessor::put(n - N, StreamProcessor::put(n, map(id)))
             }
         });
-        let ns = InfiniteList::constant(N);
-        let stream = sp.eval(ns);
-        assert_eq!(*stream.head(), N + N);
 
-        let stream_tail = stream.tail();
-        assert_eq!(*stream_tail.head(), N);
+        let (tx, stream) = OvereagerReceiver::channel(N, N);
+        tx.send(N).unwrap();
+        tx.send(0).unwrap();
+
+        let result = sp.eval(stream);
+        assert_eq!(*result.head(), N + N);
+
+        let result_tail = result.tail();
+        assert_eq!(*result_tail.head(), N);
     }
 
     #[test]
@@ -236,20 +270,5 @@ mod tests {
         });
         let trues = InfiniteList::constant(true);
         sp.eval(trues);
-    }
-
-    #[test]
-    fn test_map() {
-        let sp = map(|n: usize| n + 1);
-
-        let (tx, stream) = OvereagerReceiver::channel(0, 0);
-        tx.send(1).unwrap();
-        tx.send(10).unwrap();
-
-        let result = sp.eval(stream);
-        assert_eq!(*result.head(), 1);
-
-        let result_tail = result.tail();
-        assert_eq!(*result_tail.head(), 2);
     }
 }

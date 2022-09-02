@@ -1,7 +1,8 @@
+use rspl::combinators::map;
 use rspl::streams::infinite_lists::InfiniteList;
 use rspl::streams::overeager_receivers::OvereagerReceiver;
 use rspl::streams::{print, Stream};
-use rspl::{map, StreamProcessor};
+use rspl::StreamProcessor;
 
 use std::thread;
 
