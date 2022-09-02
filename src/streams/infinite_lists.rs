@@ -11,6 +11,14 @@ pub enum InfiniteList<'a, X: 'a> {
     Cons(X, Box<Lazy<'a, InfiniteList<'a, X>>>),
 }
 
+impl<'a, X> InfiniteList<'a, X> {
+    /// The same as [`InfiniteList::Cons`] but with thunking and boxing of `inflist` hidden to make the resulting code less verbose.
+    #[inline]
+    pub fn cons(x: X, inflist: Self) -> Self {
+        InfiniteList::Cons(x, Box::new(|| inflist))
+    }
+}
+
 impl<'a, X> Stream<X> for InfiniteList<'a, X> {
     /// Make the first list enrty of `self` the head.
     fn head(&self) -> &X {
@@ -52,15 +60,15 @@ mod tests {
 
     #[test]
     fn test_head() {
-        let inflist = InfiniteList::Cons(true, Box::new(|| InfiniteList::constant(false)));
+        let inflist = InfiniteList::cons(true, InfiniteList::constant(false));
         assert!(inflist.head());
     }
 
     #[test]
     fn test_tail() {
-        let inflist = InfiniteList::Cons(
+        let inflist = InfiniteList::cons(
             false,
-            Box::new(|| InfiniteList::Cons(true, Box::new(|| InfiniteList::constant(true)))),
+            InfiniteList::cons(true, InfiniteList::constant(true)),
         );
         assert!(inflist.tail().head());
     }

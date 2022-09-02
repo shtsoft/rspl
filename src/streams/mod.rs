@@ -55,16 +55,12 @@ mod tests {
 
     #[test]
     fn test_print() {
-        let stream = InfiniteList::Cons(
+        let stream = InfiniteList::cons(
             false,
-            Box::new(|| {
-                InfiniteList::Cons(
-                    false,
-                    Box::new(|| {
-                        InfiniteList::Cons(true, Box::new(|| InfiniteList::constant(true)))
-                    }),
-                )
-            }),
+            InfiniteList::cons(
+                false,
+                InfiniteList::cons(true, InfiniteList::constant(true)),
+            ),
         );
 
         let stream = print(stream, 2);

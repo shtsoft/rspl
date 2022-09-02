@@ -31,25 +31,25 @@ fn test_events() {
     fn default<'a>() -> StreamProcessor<'a, Event, bool> {
         fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
             match event {
-                Event::ShiftDepressed => StreamProcessor::Put(true, Box::new(shifted)),
+                Event::ShiftDepressed => StreamProcessor::put(true, shifted()),
                 Event::ShiftReleased => default(),
-                Event::Key(c) => StreamProcessor::Put(key_action('+', c), Box::new(default)),
+                Event::Key(c) => StreamProcessor::put(key_action('+', c), default()),
             }
         }
 
-        StreamProcessor::Get(Box::new(transition))
+        StreamProcessor::get(transition)
     }
 
     fn shifted<'a>() -> StreamProcessor<'a, Event, bool> {
         fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
             match event {
                 Event::ShiftDepressed => shifted(),
-                Event::ShiftReleased => StreamProcessor::Put(true, Box::new(default)),
-                Event::Key(c) => StreamProcessor::Put(key_action('-', c), Box::new(shifted)),
+                Event::ShiftReleased => StreamProcessor::put(true, default()),
+                Event::Key(c) => StreamProcessor::put(key_action('-', c), shifted()),
             }
         }
 
-        StreamProcessor::Get(Box::new(transition))
+        StreamProcessor::get(transition)
     }
 
     fn looping<S>(mut body: S) -> usize

@@ -28,6 +28,7 @@
 //! ## Usage
 //!
 //! To program a rspl-[`StreamProcessor`] you can just combine existing ones (perhaps obtained with [`map`]) by using the stream processor constructors [`StreamProcessor::Get`] and [`StreamProcessor::Put`].
+//! (Note that there are methods [`StreamProcessor::get`] and [`StreamProcessor::put`] corresponding to the stream processor constructors which allow to write less verbose code.)
 //! The program can then be evaluated with [`StreamProcessor::eval`] on some kind of input stream.
 //! The 'kind' of input stream is either your own implementation of the [`Stream`]-interface or one
 //! from the submodules of the [`streams`]-module.
@@ -62,23 +63,23 @@
 //! fn state_1<'a>() -> StreamProcessor<'a, Event, bool> {
 //!     fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
 //!         match event {
-//!             Event::Event1 => StreamProcessor::Put(action(), Box::new(state_1)),
+//!             Event::Event1 => StreamProcessor::put(action(), state_1()),
 //!             Event::Event2 => state_2(),
 //!         }
 //!     }
 //!
-//!     StreamProcessor::Get(Box::new(transition))
+//!     StreamProcessor::get(transition)
 //! }
 //!
 //! fn state_2<'a>() -> StreamProcessor<'a, Event, bool> {
 //!     fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
 //!         match event {
 //!             Event::Event1 => state_1(),
-//!             Event::Event2 => StreamProcessor::Put(false, Box::new(state_2)),
+//!             Event::Event2 => StreamProcessor::put(false, state_2()),
 //!         }
 //!     }
 //!
-//!     StreamProcessor::Get(Box::new(transition))
+//!     StreamProcessor::get(transition)
 //! }
 //!
 //! let initial = Initial {
@@ -112,6 +113,26 @@ pub enum StreamProcessor<'a, A: 'a, B> {
 }
 
 impl<'a, A, B> StreamProcessor<'a, A, B> {
+    /// The same as [`StreamProcessor::Get`] but with boxing of `f` hidden to make the resulting code less verbose.
+    #[inline]
+    pub fn get<F>(f: F) -> Self
+    where
+        F: FnOnce(A) -> Self + 'a,
+    {
+        StreamProcessor::Get(Box::new(f))
+    }
+
+    /// The same as [`StreamProcessor::Put`] but with thunking and boxing of `sp` hidden to make the resulting code less verbose.
+    #[inline]
+    pub fn put(b: B, sp: Self) -> Self
+    where
+        B: 'a,
+    {
+        StreamProcessor::Put(b, Box::new(|| sp))
+    }
+}
+
+impl<'a, A, B> StreamProcessor<'a, A, B> {
     /// Evaluate `self` on an input stream essentially implementing a semantic of [`StreamProcessor<A, B>`].
     /// - `stream` is the input stream.
     ///
@@ -131,9 +152,7 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
     /// use rspl::StreamProcessor;
     ///
     /// fn negate<'a>() -> StreamProcessor<'a, bool, bool> {
-    ///     StreamProcessor::Get(Box::new(|b: bool| {
-    ///         StreamProcessor::Put(!b, Box::new(|| negate()))
-    ///     }))
+    ///     StreamProcessor::get(|b: bool| StreamProcessor::put(!b, negate()))
     /// }
     ///
     /// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
@@ -165,9 +184,7 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
 /// ```
 /// use rspl::{map, StreamProcessor};
 ///
-/// fn negate(b: bool) -> bool {
-///     !b
-/// }
+/// let negate = |b: bool| !b;
 ///
 /// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
 ///
@@ -196,19 +213,13 @@ mod tests {
     fn test_eval() {
         const N: usize = 2;
 
-        let sp = StreamProcessor::Get(Box::new(|n: usize| {
+        let sp = StreamProcessor::get(|n: usize| {
             if n % 2 == 0 {
-                StreamProcessor::Put(
-                    n + N,
-                    Box::new(move || StreamProcessor::Put(n, Box::new(|| map(id)))),
-                )
+                StreamProcessor::put(n + N, StreamProcessor::put(n, map(id)))
             } else {
-                StreamProcessor::Put(
-                    n - N,
-                    Box::new(move || StreamProcessor::Put(n, Box::new(|| map(id)))),
-                )
+                StreamProcessor::put(n - N, StreamProcessor::put(n, map(id)))
             }
-        }));
+        });
         let ns = InfiniteList::constant(N);
         let stream = sp.eval(ns);
         assert_eq!(*stream.head(), N + N);
@@ -220,9 +231,9 @@ mod tests {
     #[test]
     #[should_panic]
     fn test_eval_panic() {
-        let sp = StreamProcessor::Get(Box::new(|b: bool| {
-            StreamProcessor::Put(if b { panic!() } else { b }, Box::new(|| map(id)))
-        }));
+        let sp = StreamProcessor::get(|b: bool| {
+            StreamProcessor::put(if b { panic!() } else { b }, map(id))
+        });
         let trues = InfiniteList::constant(true);
         sp.eval(trues);
     }

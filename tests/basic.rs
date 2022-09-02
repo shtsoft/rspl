@@ -9,13 +9,13 @@ use std::thread;
 fn test_basic() {
     const N: usize = 3;
 
-    let sp = StreamProcessor::Get(Box::new(|n: usize| {
+    let sp = StreamProcessor::get(|n: usize| {
         if n % 2 == 0 {
-            StreamProcessor::Put(N, Box::new(|| map(|n| N * n)))
+            StreamProcessor::put(N, map(|n| N * n))
         } else {
-            StreamProcessor::Put(N + 1, Box::new(|| map(|n| N * n + 1)))
+            StreamProcessor::put(N + 1, map(|n| N * n + 1))
         }
-    }));
+    });
 
     let (tx, stream) = OvereagerReceiver::channel(0, 0);
 
