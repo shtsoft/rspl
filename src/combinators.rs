@@ -42,13 +42,14 @@ where
 ///
 /// ```
 /// use rspl::combinators::filter;
+/// use rspl::streams::infinite_lists::InfiniteList;
 /// use rspl::StreamProcessor;
 ///
 /// let is_false = |b: &bool| !b;
 ///
-/// let trues = rspl::streams::infinite_lists::InfiniteList::constant(false);
+/// let falses = rspl::streams::infinite_lists::InfiniteList::constant(false);
 ///
-/// filter(is_false).eval(trues);
+/// filter(is_false).eval(InfiniteList::cons(true, falses));
 /// ```
 pub fn filter<'a, A, P>(p: P) -> StreamProcessor<'a, A, A>
 where
@@ -61,6 +62,39 @@ where
             filter(p)
         }
     }))
+}
+
+/// The function combines two stream processors into one alternating between the two whenever something is written to the ouput stream.
+/// - `sp1` is the stream processor which is in control.
+/// - `sp2` is the stream processor to which control is transferred.
+///
+/// This is function is in analogy to running coroutines.
+///
+/// # Examples
+///
+/// Remove the `true`s from a stream of bools:
+///
+/// ```
+/// use rspl::combinators::{alternate, map};
+/// use rspl::StreamProcessor;
+///
+/// let id = |b: bool| b;
+/// let flip = |b: bool| !b;
+///
+/// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
+///
+/// alternate(map(id), map(flip)).eval(trues);
+/// ```
+pub fn alternate<'a, A, B: 'a>(
+    sp1: StreamProcessor<'a, A, B>,
+    sp2: StreamProcessor<'a, A, B>,
+) -> StreamProcessor<'a, A, B> {
+    match sp1 {
+        StreamProcessor::Get(f) => StreamProcessor::Get(Box::new(|a| alternate(f(a), sp2))),
+        StreamProcessor::Put(b, lazy_sp) => {
+            StreamProcessor::Put(b, Box::new(|| alternate(sp2, lazy_sp())))
+        }
+    }
 }
 
 #[cfg(test)]
@@ -101,5 +135,31 @@ mod tests {
 
         let result_tail = result.tail();
         assert_eq!(*result_tail.head(), 2);
+    }
+
+    #[test]
+    fn test_alternate() {
+        let is_greater_zero = |n: &i8| *n > 0;
+        let is_less_zero = |n: &i8| *n < 0;
+
+        let sp = alternate(filter(is_greater_zero), filter(is_less_zero));
+
+        let (tx, stream) = OvereagerReceiver::channel(0, 0);
+        tx.send(1).unwrap();
+        tx.send(2).unwrap();
+        tx.send(-1).unwrap();
+        tx.send(-2).unwrap();
+        tx.send(1).unwrap();
+        tx.send(0).unwrap();
+        tx.send(0).unwrap();
+
+        let result = sp.eval(stream);
+        assert_eq!(*result.head(), 1);
+
+        let result_tail = result.tail();
+        assert_eq!(*result_tail.head(), -1);
+
+        let result_tail_tail = result_tail.tail();
+        assert_eq!(*result_tail_tail.head(), 1);
     }
 }
