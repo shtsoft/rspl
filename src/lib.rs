@@ -206,6 +206,38 @@ pub mod combinators {
         }))
     }
 
+    /// Construct the stream processor which filters the input stream according to a given predicate.
+    /// - `p` is the predicate serving as filter.
+    ///
+    /// The function is in analogy to the filter-function on lists which is well-known in functional programming.
+    ///
+    /// # Examples
+    ///
+    /// Remove the `true`s from a stream of bools:
+    ///
+    /// ```
+    /// use rspl::combinators::filter;
+    /// use rspl::StreamProcessor;
+    ///
+    /// let is_false = |b: &bool| !b;
+    ///
+    /// let trues = rspl::streams::infinite_lists::InfiniteList::constant(false);
+    ///
+    /// filter(is_false).eval(trues);
+    /// ```
+    pub fn filter<'a, A, P>(p: P) -> StreamProcessor<'a, A, A>
+    where
+        P: Fn(&A) -> bool + 'a,
+    {
+        StreamProcessor::Get(Box::new(|a: A| {
+            if p(&a) {
+                StreamProcessor::Put(a, Box::new(|| filter(p)))
+            } else {
+                filter(p)
+            }
+        }))
+    }
+
     #[cfg(test)]
     mod tests {
         use super::*;
@@ -218,6 +250,25 @@ pub mod combinators {
 
             let (tx, stream) = OvereagerReceiver::channel(0, 0);
             tx.send(1).unwrap();
+            tx.send(10).unwrap();
+
+            let result = sp.eval(stream);
+            assert_eq!(*result.head(), 1);
+
+            let result_tail = result.tail();
+            assert_eq!(*result_tail.head(), 2);
+        }
+
+        #[test]
+        fn test_filter() {
+            let is_greater_zero = |n: &usize| *n > 0;
+
+            let sp = filter(is_greater_zero);
+
+            let (tx, stream) = OvereagerReceiver::channel(0, 0);
+            tx.send(1).unwrap();
+            tx.send(0).unwrap();
+            tx.send(2).unwrap();
             tx.send(10).unwrap();
 
             let result = sp.eval(stream);
