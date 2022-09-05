@@ -64,6 +64,43 @@ where
     }))
 }
 
+/// The function combines two stream processors into one applying the second to the result of the first.
+/// - `sp1` is the stream processor.
+/// - `sp2` is the stream processor.
+///
+/// This is function is in analogy to function composition.
+/// More generally, it is the composition operation in a category with stream processors as morphisms.
+///
+/// # Examples
+///
+/// Double-negate a stream of bools:
+///
+/// ```
+/// use rspl::combinators::{compose, map};
+/// use rspl::StreamProcessor;
+///
+/// let negate = |b: bool| !b;
+///
+/// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
+///
+/// compose(map(negate), map(negate)).eval(trues);
+/// ```
+pub fn compose<'a, A, B, C: 'a>(
+    sp1: StreamProcessor<'a, A, B>,
+    sp2: StreamProcessor<'a, B, C>,
+) -> StreamProcessor<'a, A, C> {
+    match sp1 {
+        StreamProcessor::Get(f1) => StreamProcessor::Get(Box::new(|a| compose(f1(a), sp2))),
+        StreamProcessor::Put(b, lazy_sp1) => match sp2 {
+            StreamProcessor::Get(f2) => compose(lazy_sp1(), f2(b)),
+            StreamProcessor::Put(c, lazy_sp2) => StreamProcessor::Put(
+                c,
+                Box::new(|| compose(StreamProcessor::Put(b, lazy_sp1), lazy_sp2())),
+            ),
+        },
+    }
+}
+
 /// The function combines two stream processors into one alternating between the two whenever something is written to the ouput stream.
 /// - `sp1` is the stream processor which is in control.
 /// - `sp2` is the stream processor to which control is transferred.
@@ -107,7 +144,7 @@ mod tests {
     fn test_map() {
         let sp = map(|n: usize| n + 1);
 
-        let (tx, stream) = OvereagerReceiver::channel(0, 0);
+        let (tx, stream) = OvereagerReceiver::channel(10, 0);
         tx.send(1).unwrap();
         tx.send(10).unwrap();
 
@@ -135,6 +172,29 @@ mod tests {
 
         let result_tail = result.tail();
         assert_eq!(*result_tail.head(), 2);
+    }
+
+    #[test]
+    //#[ignore]
+    fn test_compose() {
+        let plus_one = |n: usize| n + 1;
+
+        let sp = compose(map(plus_one), map(plus_one));
+
+        let (tx, stream) = OvereagerReceiver::channel(0, 0);
+        tx.send(1).unwrap();
+        tx.send(2).unwrap();
+        tx.send(10).unwrap();
+        tx.send(10).unwrap();
+
+        let result = sp.eval(stream);
+        assert_eq!(*result.head(), 2);
+
+        let result_tail = result.tail();
+        assert_eq!(*result_tail.head(), 1 + 2);
+
+        let result_tail_tail = result_tail.tail();
+        assert_eq!(*result_tail_tail.head(), 2 + 2);
     }
 
     #[test]
