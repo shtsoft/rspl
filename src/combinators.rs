@@ -68,7 +68,7 @@ where
 /// - `sp1` is the stream processor.
 /// - `sp2` is the stream processor.
 ///
-/// This is function is in analogy to function composition.
+/// This function is in analogy to ordinary function composition.
 /// More generally, it is the composition operation in a category with stream processors as morphisms.
 ///
 /// # Examples
@@ -105,7 +105,7 @@ pub fn compose<'a, A, B, C: 'a>(
 /// - `sp1` is the stream processor which is in control.
 /// - `sp2` is the stream processor to which control is transferred.
 ///
-/// This is function is in analogy to running coroutines.
+/// This function is in analogy to running coroutines.
 ///
 /// # Examples
 ///
@@ -131,6 +131,37 @@ pub fn alternate<'a, A, B: 'a>(
         StreamProcessor::Put(b, lazy_sp) => {
             StreamProcessor::Put(b, Box::new(|| alternate(sp2, lazy_sp())))
         }
+    }
+}
+
+/// The function combines a stream processor and a family of them into one processing with the given one until an element would be written using that element to choose a stream processor from the family to carry on processing instead of writing it to the output stream.
+/// - `sp` is the stream processor.
+/// - `f` is the family of stream processors.
+///
+/// This function is in analogy to the bind-operation of monads (though we do **not** claim that it is the bind-operation of an actual monad `StreamProcessor<X, _>`).
+///
+/// # Examples
+///
+/// Flip the signs in a stream of integers if the head of the stream is zero, otherwise leave the stream as it is:
+///
+/// ```
+/// use rspl::combinators::{bind, map};
+/// use rspl::StreamProcessor;
+///
+/// let is_zero = |n| n == 0;
+/// let maybe_flip_sign = |b| if b { map(|n: i32| -n) } else { map(|n| n) };
+///
+/// let ones = rspl::streams::infinite_lists::InfiniteList::constant(1);
+///
+/// bind(map(is_zero), maybe_flip_sign).eval(ones);
+/// ```
+pub fn bind<'a, X, A: 'a, B, F>(sp: StreamProcessor<'a, X, A>, g: F) -> StreamProcessor<'a, X, B>
+where
+    F: Fn(A) -> StreamProcessor<'a, X, B> + 'a,
+{
+    match sp {
+        StreamProcessor::Get(f) => StreamProcessor::Get(Box::new(|a| bind(f(a), g))),
+        StreamProcessor::Put(b, _) => g(b),
     }
 }
 
@@ -175,7 +206,6 @@ mod tests {
     }
 
     #[test]
-    //#[ignore]
     fn test_compose() {
         let plus_one = |n: usize| n + 1;
 
@@ -221,5 +251,40 @@ mod tests {
 
         let result_tail_tail = result_tail.tail();
         assert_eq!(*result_tail_tail.head(), 1);
+    }
+
+    #[test]
+    fn test_bind() {
+        let is_zero = |n: usize| n == 0;
+
+        let sp = bind(map(is_zero), |b| {
+            if b {
+                bind(map(is_zero), |b| {
+                    if b {
+                        map(|n| n + 2)
+                    } else {
+                        map(|n| n + 1)
+                    }
+                })
+            } else {
+                filter(|n| *n > 0)
+            }
+        });
+
+        let (tx, stream) = OvereagerReceiver::channel(0, 0);
+        tx.send(1).unwrap();
+        tx.send(0).unwrap();
+        tx.send(1).unwrap();
+        tx.send(2).unwrap();
+        tx.send(10).unwrap();
+
+        let result = sp.eval(stream);
+        assert_eq!(*result.head(), 1);
+
+        let result_tail = result.tail();
+        assert_eq!(*result_tail.head(), 1 + 1);
+
+        let result_tail_tail = result_tail.tail();
+        assert_eq!(*result_tail_tail.head(), 2 + 1);
     }
 }
