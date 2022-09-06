@@ -186,25 +186,34 @@ mod tests {
 
     #[test]
     fn test_eval() {
-        const N: usize = 2;
-
         let sp = StreamProcessor::get(|n: usize| {
-            if n % 2 == 0 {
-                StreamProcessor::put(n + N, StreamProcessor::put(n, map(id)))
-            } else {
-                StreamProcessor::put(n - N, StreamProcessor::put(n, map(id)))
-            }
+            StreamProcessor::put(
+                n,
+                StreamProcessor::get(|n1: usize| {
+                    StreamProcessor::get(move |n2: usize| {
+                        if n1 < n2 {
+                            StreamProcessor::put(n2, StreamProcessor::put(n1, map(id)))
+                        } else {
+                            StreamProcessor::put(n1, StreamProcessor::put(n2, map(id)))
+                        }
+                    })
+                }),
+            )
         });
 
-        let (tx, stream) = OvereagerReceiver::channel(N, N);
-        tx.send(N).unwrap();
+        let (tx, stream) = OvereagerReceiver::channel(0, 0);
+        tx.send(1).unwrap();
+        tx.send(2).unwrap();
         tx.send(0).unwrap();
 
         let result = sp.eval(stream);
-        assert_eq!(*result.head(), N + N);
+        assert_eq!(*result.head(), 0);
 
         let result_tail = result.tail();
-        assert_eq!(*result_tail.head(), N);
+        assert_eq!(*result_tail.head(), 2);
+
+        let result_tail_tail = result_tail.tail();
+        assert_eq!(*result_tail_tail.head(), 1);
     }
 
     #[test]
