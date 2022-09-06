@@ -185,6 +185,22 @@ mod tests {
     }
 
     #[test]
+    fn test_get() {
+        assert!(matches!(
+            StreamProcessor::get(|_: ()| { map(id) }),
+            StreamProcessor::Get(_)
+        ));
+    }
+
+    #[test]
+    fn test_put() {
+        assert!(matches!(
+            StreamProcessor::put((), map(id)),
+            StreamProcessor::Put(_, _)
+        ));
+    }
+
+    #[test]
     fn test_eval() {
         let sp = StreamProcessor::get(|n: usize| {
             StreamProcessor::put(

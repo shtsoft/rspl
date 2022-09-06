@@ -59,6 +59,14 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_cons() {
+        assert!(matches!(
+            InfiniteList::cons((), InfiniteList::constant(())),
+            InfiniteList::Cons(_, _)
+        ));
+    }
+
+    #[test]
     fn test_head() {
         let inflist = InfiniteList::cons(true, InfiniteList::constant(false));
         assert!(inflist.head());
