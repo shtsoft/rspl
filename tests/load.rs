@@ -1,4 +1,4 @@
-use rspl::combinators::map;
+use rspl::combinators::{compose, filter, map};
 use rspl::streams::overeager_receivers::OvereagerReceiver;
 use rspl::streams::print;
 
@@ -7,18 +7,22 @@ use std::thread;
 #[test]
 #[ignore]
 fn test_load() {
-    const N: usize = 9;
+    const N: usize = 10;
 
     const fn factorial(mut n: usize) -> usize {
         let mut acc = n;
         while n > 1 {
-            acc = acc * n - 1;
+            acc *= n - 1;
             n -= 1;
         }
         acc
     }
 
-    let sp = map(factorial);
+    let is_even = |n: &usize| *n % 2 == 0;
+
+    let plus_one = |n: usize| n + 1;
+
+    let sp = compose(compose(filter(is_even), map(factorial)), map(plus_one));
 
     let (tx, stream) = OvereagerReceiver::channel(0, 0);
 
@@ -36,5 +40,5 @@ fn test_load() {
 
     fill_stream.join().unwrap();
 
-    print(rest, (N - 1) * factorial(N) - 1);
+    print(rest, factorial(N));
 }
