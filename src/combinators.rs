@@ -1,4 +1,4 @@
-//! This module defines (parameterized) functions which combine existing stream processors into new ones.
+//! This module defines functions which combine existing stream processors into new ones.
 //! In particular, there are nullary combinators to get writing a stream processor off the ground.
 
 use super::StreamProcessor;
@@ -10,15 +10,16 @@ use super::StreamProcessor;
 ///
 /// # Examples
 ///
-/// Negating a stream of `true`s to obtain a stream of `false`s:
+/// Negate a stream of bools:
 ///
 /// ```
 /// use rspl::combinators::map;
+/// use rspl::streams::infinite_lists::InfiniteList;
 /// use rspl::StreamProcessor;
 ///
 /// let negate = |b: bool| !b;
 ///
-/// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
+/// let trues = InfiniteList::constant(true);
 ///
 /// map(negate).eval(trues);
 /// ```
@@ -38,18 +39,18 @@ where
 ///
 /// # Examples
 ///
-/// Remove the `true`s from a stream of bools:
+/// Remove the `0`s from a stream of integers:
 ///
 /// ```
 /// use rspl::combinators::filter;
 /// use rspl::streams::infinite_lists::InfiniteList;
 /// use rspl::StreamProcessor;
 ///
-/// let is_false = |b: &bool| !b;
+/// let is_greater_zero = |n: &usize| *n > 0;
 ///
-/// let falses = rspl::streams::infinite_lists::InfiniteList::constant(false);
+/// let ones = InfiniteList::constant(1);
 ///
-/// filter(is_false).eval(InfiniteList::cons(true, falses));
+/// filter(is_greater_zero).eval(InfiniteList::cons(0, ones));
 /// ```
 pub fn filter<'a, A, P>(p: P) -> StreamProcessor<'a, A, A>
 where
@@ -65,8 +66,8 @@ where
 }
 
 /// The function combines two stream processors into one applying the second to the result of the first.
-/// - `sp1` is the stream processor.
-/// - `sp2` is the stream processor.
+/// - `sp1` is the stream processor applied first.
+/// - `sp2` is the stream processor applied second.
 ///
 /// This function is in analogy to ordinary function composition.
 /// More generally, it is the composition operation in a category with stream processors as morphisms.
@@ -77,11 +78,12 @@ where
 ///
 /// ```
 /// use rspl::combinators::{compose, map};
+/// use rspl::streams::infinite_lists::InfiniteList;
 /// use rspl::StreamProcessor;
 ///
 /// let negate = |b: bool| !b;
 ///
-/// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
+/// let trues = InfiniteList::constant(true);
 ///
 /// compose(map(negate), map(negate)).eval(trues);
 /// ```
@@ -90,9 +92,9 @@ pub fn compose<'a, A, B, C: 'a>(
     sp2: StreamProcessor<'a, B, C>,
 ) -> StreamProcessor<'a, A, C> {
     match sp1 {
-        StreamProcessor::Get(f1) => StreamProcessor::Get(Box::new(|a| compose(f1(a), sp2))),
+        StreamProcessor::Get(f) => StreamProcessor::Get(Box::new(|a| compose(f(a), sp2))),
         StreamProcessor::Put(b, lazy_sp1) => match sp2 {
-            StreamProcessor::Get(f2) => compose(lazy_sp1(), f2(b)),
+            StreamProcessor::Get(f) => compose(lazy_sp1(), f(b)),
             StreamProcessor::Put(c, lazy_sp2) => StreamProcessor::Put(
                 c,
                 Box::new(|| compose(StreamProcessor::Put(b, lazy_sp1), lazy_sp2())),
@@ -105,22 +107,24 @@ pub fn compose<'a, A, B, C: 'a>(
 /// - `sp1` is the stream processor which is in control.
 /// - `sp2` is the stream processor to which control is transferred.
 ///
-/// This function is in analogy to running coroutines.
+/// This function is in analogy to running coroutines as it runs its arguments concurrently on the
+/// input stream.
 ///
 /// # Examples
 ///
-/// Remove the `true`s from a stream of bools:
+/// Negate a stream of bools in any other position:
 ///
 /// ```
 /// use rspl::combinators::{alternate, map};
+/// use rspl::streams::infinite_lists::InfiniteList;
 /// use rspl::StreamProcessor;
 ///
 /// let id = |b: bool| b;
-/// let flip = |b: bool| !b;
+/// let negate = |b: bool| !b;
 ///
-/// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
+/// let trues = InfiniteList::constant(true);
 ///
-/// alternate(map(id), map(flip)).eval(trues);
+/// alternate(map(id), map(negate)).eval(trues);
 /// ```
 pub fn alternate<'a, A, B: 'a>(
     sp1: StreamProcessor<'a, A, B>,
@@ -138,30 +142,31 @@ pub fn alternate<'a, A, B: 'a>(
 /// - `sp` is the stream processor.
 /// - `f` is the family of stream processors.
 ///
-/// This function is in analogy to the bind-operation of monads (though we do **not** claim that it is the bind-operation of an actual monad `StreamProcessor<X, _>`).
+/// This function is in analogy to the bind operation of monads (though we do **not** claim that it is the bind operation of an actual monad `StreamProcessor<X, _>`).
 ///
 /// # Examples
 ///
-/// Flip the signs in a stream of integers if the head of the stream is zero, otherwise leave the stream as it is:
+/// Flip the signs in the tail of a stream of integers depending on the head of the stream:
 ///
 /// ```
 /// use rspl::combinators::{bind, map};
+/// use rspl::streams::infinite_lists::InfiniteList;
 /// use rspl::StreamProcessor;
 ///
-/// let is_zero = |n| n == 0;
-/// let maybe_flip_sign = |b| if b { map(|n: i32| -n) } else { map(|n| n) };
+/// let is_zero = |n: isize| n == 0;
+/// let maybe_flip_sign = |b: bool| if b { map(|n: isize| -n) } else { map(|n: isize| n) };
 ///
-/// let ones = rspl::streams::infinite_lists::InfiniteList::constant(1);
+/// let ones = InfiniteList::constant(1);
 ///
 /// bind(map(is_zero), maybe_flip_sign).eval(ones);
 /// ```
-pub fn bind<'a, X, A: 'a, B, F>(sp: StreamProcessor<'a, X, A>, g: F) -> StreamProcessor<'a, X, B>
+pub fn bind<'a, X, A: 'a, B, F>(sp: StreamProcessor<'a, X, A>, f: F) -> StreamProcessor<'a, X, B>
 where
-    F: Fn(A) -> StreamProcessor<'a, X, B> + 'a,
+    F: FnOnce(A) -> StreamProcessor<'a, X, B> + 'a,
 {
     match sp {
-        StreamProcessor::Get(f) => StreamProcessor::Get(Box::new(|a| bind(f(a), g))),
-        StreamProcessor::Put(b, _) => g(b),
+        StreamProcessor::Get(g) => StreamProcessor::Get(Box::new(|a| bind(g(a), f))),
+        StreamProcessor::Put(b, _) => f(b),
     }
 }
 
@@ -173,7 +178,9 @@ mod tests {
 
     #[test]
     fn test_map() {
-        let sp = map(|n: usize| n + 1);
+        let plus_one = |n: usize| n + 1;
+
+        let sp = map(plus_one);
 
         let (tx, stream) = OvereagerReceiver::channel(10, 0);
         tx.send(1).unwrap();
@@ -211,7 +218,7 @@ mod tests {
 
         let sp = compose(map(plus_one), map(plus_one));
 
-        let (tx, stream) = OvereagerReceiver::channel(0, 0);
+        let (tx, stream) = OvereagerReceiver::channel(10, 0);
         tx.send(1).unwrap();
         tx.send(2).unwrap();
         tx.send(10).unwrap();
@@ -257,9 +264,9 @@ mod tests {
     fn test_bind() {
         let is_zero = |n: usize| n == 0;
 
-        let sp = bind(map(is_zero), |b| {
+        let sp = bind(map(is_zero), |b: bool| {
             if b {
-                bind(map(is_zero), |b| {
+                bind(map(is_zero), |b: bool| {
                     if b {
                         map(|n| n + 2)
                     } else {
