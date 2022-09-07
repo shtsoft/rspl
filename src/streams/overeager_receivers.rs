@@ -14,23 +14,6 @@ pub struct OvereagerReceiver<X> {
     receiver: Receiver<X>,
 }
 
-impl<X> Stream<X> for OvereagerReceiver<X> {
-    /// Make the message buffer of `self` the head.
-    fn head(&self) -> &X {
-        &self.message
-    }
-
-    /// Blocks the current thread until it can make `self` with an updated message buffer the tail.
-    ///
-    /// # Panics
-    ///
-    /// A panic is caused if the channel becomes disconnected.
-    fn tail(mut self) -> Self {
-        self.message = self.receiver.recv().unwrap();
-        self
-    }
-}
-
 impl<X> OvereagerReceiver<X> {
     /// Create a channel with an overeager receiver instead of a normal one.
     /// - `cap` is the number of messages the channel can hold where `0` means it can hold any number of messages.
@@ -46,6 +29,23 @@ impl<X> OvereagerReceiver<X> {
     pub fn channel(cap: usize, message: X) -> (Sender<X>, Self) {
         let (tx, receiver) = if cap > 0 { bounded(cap) } else { unbounded() };
         (tx, Self { message, receiver })
+    }
+}
+
+impl<X> Stream<X> for OvereagerReceiver<X> {
+    /// Make the message buffer of `self` the head.
+    fn head(&self) -> &X {
+        &self.message
+    }
+
+    /// Blocks the current thread until it can make `self` with an updated message buffer the tail.
+    ///
+    /// # Panics
+    ///
+    /// A panic is caused if the channel becomes disconnected.
+    fn tail(mut self) -> Self {
+        self.message = self.receiver.recv().unwrap();
+        self
     }
 }
 
@@ -67,6 +67,14 @@ mod tests {
     }
 
     #[test]
+    fn test_overeager_channel() {
+        let (tx, mut stream) = OvereagerReceiver::channel(1, false);
+        enqueue!(tx, [true]);
+        assert_head_eq!(stream, false);
+        assert_tail_starts_with!(stream, [true]);
+    }
+
+    #[test]
     fn test_head() {
         let (_, rx) = channel();
         let stream = OvereagerReceiver {
@@ -85,13 +93,5 @@ mod tests {
         };
         enqueue!(tx, [true]);
         assert!(stream.tail().head());
-    }
-
-    #[test]
-    fn test_overeager_channel() {
-        let (tx, mut stream) = OvereagerReceiver::channel(1, false);
-        enqueue!(tx, [true]);
-        assert_head_eq!(stream, false);
-        assert_tail_starts_with!(stream, [true]);
     }
 }

@@ -19,22 +19,6 @@ impl<'a, X> InfiniteList<'a, X> {
     }
 }
 
-impl<'a, X> Stream<X> for InfiniteList<'a, X> {
-    /// Make the first list enrty of `self` the head.
-    fn head(&self) -> &X {
-        match self {
-            Self::Cons(head, _) => head,
-        }
-    }
-
-    /// Make all but the first list entry of `self` the tail.
-    fn tail(self) -> Self {
-        match self {
-            Self::Cons(_, tail) => tail(),
-        }
-    }
-}
-
 impl<'a, X> InfiniteList<'a, X> {
     /// Create an infinte list of a certain constant.
     /// - `x` is the constant.
@@ -54,6 +38,22 @@ impl<'a, X> InfiniteList<'a, X> {
     }
 }
 
+impl<'a, X> Stream<X> for InfiniteList<'a, X> {
+    /// Make the first list enrty of `self` the head.
+    fn head(&self) -> &X {
+        match self {
+            Self::Cons(head, _) => head,
+        }
+    }
+
+    /// Make all but the first list entry of `self` the tail.
+    fn tail(self) -> Self {
+        match self {
+            Self::Cons(_, tail) => tail(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -70,6 +70,15 @@ mod tests {
     }
 
     #[test]
+    fn test_constant() {
+        const X: bool = true;
+
+        let mut xs = InfiniteList::constant(X);
+        assert_head_eq!(xs, X);
+        assert_tail_starts_with!(xs, [X, X]);
+    }
+
+    #[test]
     fn test_head() {
         let inflist = InfiniteList::cons(true, InfiniteList::constant(false));
         assert!(inflist.head());
@@ -82,14 +91,5 @@ mod tests {
             InfiniteList::cons(true, InfiniteList::constant(true)),
         );
         assert!(inflist.tail().head());
-    }
-
-    #[test]
-    fn test_constant() {
-        const X: bool = true;
-
-        let mut xs = InfiniteList::constant(X);
-        assert_head_eq!(xs, X);
-        assert_tail_starts_with!(xs, [X, X]);
     }
 }
