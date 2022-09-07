@@ -19,14 +19,12 @@ fn test_load() {
     }
 
     let is_even = |n: &usize| *n % 2 == 0;
-
     let plus_one = |n: usize| n + 1;
 
     let sp = compose(compose(filter(is_even), map(factorial)), map(plus_one));
 
     let (tx, stream) = OvereagerReceiver::channel(0, 0);
-
-    let fill_stream = thread::spawn(move || {
+    let input_simulator = thread::spawn(move || {
         for _ in 0..factorial(N) {
             for n in 0..N {
                 tx.send(n).unwrap();
@@ -38,7 +36,7 @@ fn test_load() {
 
     let rest = print(result, factorial(N));
 
-    fill_stream.join().unwrap();
+    input_simulator.join().unwrap();
 
     print(rest, factorial(N));
 }

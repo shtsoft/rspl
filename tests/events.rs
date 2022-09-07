@@ -72,7 +72,6 @@ fn test_events() {
     };
 
     let (tevents, events) = OvereagerReceiver::channel(100, initial.event);
-
     let input_simulator = thread::spawn(move || {
         let wait = || thread::sleep(Duration::from_millis(100));
 

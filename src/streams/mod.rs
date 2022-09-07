@@ -53,6 +53,23 @@ mod tests {
     use super::*;
     use infinite_lists::InfiniteList;
 
+    #[macro_export]
+    macro_rules! assert_head_eq {
+        ($stream:expr, $x:expr) => {
+            assert_eq!(*$stream.head(), $x);
+        };
+    }
+
+    #[macro_export]
+    macro_rules! assert_tail_starts_with {
+        ($stream:expr, $xs:expr) => {
+            for x in $xs {
+                $stream = $stream.tail();
+                assert_head_eq!($stream, x);
+            }
+        };
+    }
+
     #[test]
     fn test_print() {
         let stream = InfiniteList::cons(

@@ -28,10 +28,9 @@ fn test_basic() {
         }
     });
 
-    let (tx, stream) = OvereagerReceiver::channel(0, 0);
-
     // a silly way to construct the stream beginning with 0, 1, 2, 3, 4, 5, 6
-    let fill_stream = thread::spawn(move || {
+    let (tx, stream) = OvereagerReceiver::channel(0, 0);
+    let input_simulator = thread::spawn(move || {
         fn ascending<'a>(n: usize) -> InfiniteList<'a, usize> {
             InfiniteList::Cons(n, Box::new(move || ascending(n + 1)))
         }
@@ -53,5 +52,5 @@ fn test_basic() {
     let rest = print(result_tail, 3);
     assert_eq!(*rest.head(), 5);
 
-    fill_stream.join().unwrap();
+    input_simulator.join().unwrap();
 }

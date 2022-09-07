@@ -176,6 +176,10 @@ mod tests {
     use crate::streams::overeager_receivers::OvereagerReceiver;
     use crate::streams::Stream;
 
+    use crate::assert_head_eq;
+    use crate::assert_tail_starts_with;
+    use crate::enqueue;
+
     #[test]
     fn test_map() {
         let plus_one = |n: usize| n + 1;
@@ -183,14 +187,11 @@ mod tests {
         let sp = map(plus_one);
 
         let (tx, stream) = OvereagerReceiver::channel(10, 0);
-        tx.send(1).unwrap();
-        tx.send(10).unwrap();
+        enqueue!(tx, [1, 10]);
 
-        let result = sp.eval(stream);
-        assert_eq!(*result.head(), 1);
-
-        let result_tail = result.tail();
-        assert_eq!(*result_tail.head(), 2);
+        let mut result = sp.eval(stream);
+        assert_head_eq!(result, 1);
+        assert_tail_starts_with!(result, [2]);
     }
 
     #[test]
@@ -200,16 +201,11 @@ mod tests {
         let sp = filter(is_greater_zero);
 
         let (tx, stream) = OvereagerReceiver::channel(0, 0);
-        tx.send(1).unwrap();
-        tx.send(0).unwrap();
-        tx.send(2).unwrap();
-        tx.send(10).unwrap();
+        enqueue!(tx, [1, 0, 2, 10]);
 
-        let result = sp.eval(stream);
-        assert_eq!(*result.head(), 1);
-
-        let result_tail = result.tail();
-        assert_eq!(*result_tail.head(), 2);
+        let mut result = sp.eval(stream);
+        assert_head_eq!(result, 1);
+        assert_tail_starts_with!(result, [2]);
     }
 
     #[test]
@@ -219,19 +215,11 @@ mod tests {
         let sp = compose(map(plus_one), map(plus_one));
 
         let (tx, stream) = OvereagerReceiver::channel(10, 0);
-        tx.send(1).unwrap();
-        tx.send(2).unwrap();
-        tx.send(10).unwrap();
-        tx.send(10).unwrap();
+        enqueue!(tx, [1, 2, 10, 10]);
 
-        let result = sp.eval(stream);
-        assert_eq!(*result.head(), 2);
-
-        let result_tail = result.tail();
-        assert_eq!(*result_tail.head(), 1 + 2);
-
-        let result_tail_tail = result_tail.tail();
-        assert_eq!(*result_tail_tail.head(), 2 + 2);
+        let mut result = sp.eval(stream);
+        assert_head_eq!(result, 2);
+        assert_tail_starts_with!(result, [3, 4]);
     }
 
     #[test]
@@ -242,22 +230,11 @@ mod tests {
         let sp = alternate(filter(is_greater_zero), filter(is_less_zero));
 
         let (tx, stream) = OvereagerReceiver::channel(0, 0);
-        tx.send(1).unwrap();
-        tx.send(2).unwrap();
-        tx.send(-1).unwrap();
-        tx.send(-2).unwrap();
-        tx.send(1).unwrap();
-        tx.send(0).unwrap();
-        tx.send(0).unwrap();
+        enqueue!(tx, [1, 2, -1, -2, 1, 0, 0]);
 
-        let result = sp.eval(stream);
-        assert_eq!(*result.head(), 1);
-
-        let result_tail = result.tail();
-        assert_eq!(*result_tail.head(), -1);
-
-        let result_tail_tail = result_tail.tail();
-        assert_eq!(*result_tail_tail.head(), 1);
+        let mut result = sp.eval(stream);
+        assert_head_eq!(result, 1);
+        assert_tail_starts_with!(result, [-1, 1]);
     }
 
     #[test]
@@ -279,19 +256,10 @@ mod tests {
         });
 
         let (tx, stream) = OvereagerReceiver::channel(0, 0);
-        tx.send(1).unwrap();
-        tx.send(0).unwrap();
-        tx.send(1).unwrap();
-        tx.send(2).unwrap();
-        tx.send(10).unwrap();
+        enqueue!(tx, [1, 0, 1, 2, 10]);
 
-        let result = sp.eval(stream);
-        assert_eq!(*result.head(), 1);
-
-        let result_tail = result.tail();
-        assert_eq!(*result_tail.head(), 1 + 1);
-
-        let result_tail_tail = result_tail.tail();
-        assert_eq!(*result_tail_tail.head(), 2 + 1);
+        let mut result = sp.eval(stream);
+        assert_head_eq!(result, 1);
+        assert_tail_starts_with!(result, [2, 3]);
     }
 }

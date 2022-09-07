@@ -58,6 +58,9 @@ impl<'a, X> InfiniteList<'a, X> {
 mod tests {
     use super::*;
 
+    use crate::assert_head_eq;
+    use crate::assert_tail_starts_with;
+
     #[test]
     fn test_cons() {
         assert!(matches!(
@@ -83,12 +86,10 @@ mod tests {
 
     #[test]
     fn test_constant() {
-        const X: &usize = &0;
+        const X: bool = true;
 
-        let xs = InfiniteList::constant(X);
-        assert_eq!(*xs.head(), X);
-
-        let xs_tail = xs.tail();
-        assert_eq!(*xs_tail.head(), X);
+        let mut xs = InfiniteList::constant(X);
+        assert_head_eq!(xs, X);
+        assert_tail_starts_with!(xs, [X, X]);
     }
 }

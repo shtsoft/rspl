@@ -54,6 +54,18 @@ mod tests {
     use super::*;
     use crossbeam::channel::unbounded as channel;
 
+    use crate::assert_head_eq;
+    use crate::assert_tail_starts_with;
+
+    #[macro_export]
+    macro_rules! enqueue {
+        ($tx:expr, $xs:expr) => {
+            for x in $xs {
+                $tx.send(x).unwrap();
+            }
+        };
+    }
+
     #[test]
     fn test_head() {
         let (_, rx) = channel();
@@ -71,14 +83,15 @@ mod tests {
             message: false,
             receiver: rx,
         };
-        tx.send(true).unwrap();
+        enqueue!(tx, [true]);
         assert!(stream.tail().head());
     }
 
     #[test]
     fn test_overeager_channel() {
-        let (tx, stream) = OvereagerReceiver::channel(1, false);
-        tx.send(true).unwrap();
-        assert!(stream.tail().head());
+        let (tx, mut stream) = OvereagerReceiver::channel(1, false);
+        enqueue!(tx, [true]);
+        assert_head_eq!(stream, false);
+        assert_tail_starts_with!(stream, [true]);
     }
 }

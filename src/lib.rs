@@ -88,7 +88,6 @@
 //! };
 //!
 //! let (tevents, events) = OvereagerReceiver::channel(0, initial.event);
-//!
 //! tevents.send(Event::Event2).unwrap();
 //!
 //! let event_loop_body = initial.state.eval(events);
@@ -180,6 +179,10 @@ mod tests {
     use combinators::map;
     use streams::overeager_receivers::OvereagerReceiver;
 
+    use crate::assert_head_eq;
+    use crate::assert_tail_starts_with;
+    use crate::enqueue;
+
     const fn id<X>(x: X) -> X {
         x
     }
@@ -218,18 +221,11 @@ mod tests {
         });
 
         let (tx, stream) = OvereagerReceiver::channel(0, 0);
-        tx.send(1).unwrap();
-        tx.send(2).unwrap();
-        tx.send(0).unwrap();
+        enqueue!(tx, [1, 2, 0]);
 
-        let result = sp.eval(stream);
-        assert_eq!(*result.head(), 0);
-
-        let result_tail = result.tail();
-        assert_eq!(*result_tail.head(), 2);
-
-        let result_tail_tail = result_tail.tail();
-        assert_eq!(*result_tail_tail.head(), 1);
+        let mut result = sp.eval(stream);
+        assert_head_eq!(result, 0);
+        assert_tail_starts_with!(result, [2, 1]);
     }
 
     #[test]
@@ -238,7 +234,9 @@ mod tests {
         let sp = StreamProcessor::get(|b: bool| {
             StreamProcessor::put(if b { panic!() } else { b }, map(id))
         });
+
         let trues = InfiniteList::constant(true);
+
         sp.eval(trues);
     }
 }
