@@ -12,3 +12,6 @@ categories = ["asynchronous", "embedded"]
 
 [dependencies]
 crossbeam = "0.8"
+
+[[example]]
+name = "pelican"
