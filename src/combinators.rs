@@ -188,7 +188,7 @@ mod tests {
         let sp = alternate(filter(is_greater_zero), filter(is_less_zero));
 
         let (tx, stream) = OvereagerReceiver::channel(0, 0);
-        enqueue!(tx, [1, 2, -1, -2, 1, 0, 0]);
+        enqueue!(tx, [1, 2, -1, -2, 1]);
 
         let mut result = sp.eval(stream);
         assert_head_eq!(result, 1);
@@ -214,7 +214,7 @@ mod tests {
         });
 
         let (tx, stream) = OvereagerReceiver::channel(0, 0);
-        enqueue!(tx, [1, 0, 1, 2, 10]);
+        enqueue!(tx, [1, 0, 1, 2]);
 
         let mut result = sp.eval(stream);
         assert_head_eq!(result, 1);
@@ -228,7 +228,7 @@ mod tests {
         let sp = compose(map(plus_one), map(plus_one));
 
         let (tx, stream) = OvereagerReceiver::channel(10, 0);
-        enqueue!(tx, [1, 2, 10, 10]);
+        enqueue!(tx, [1, 2, 10]);
 
         let mut result = sp.eval(stream);
         assert_head_eq!(result, 2);
@@ -242,7 +242,7 @@ mod tests {
         let sp = filter(is_greater_zero);
 
         let (tx, stream) = OvereagerReceiver::channel(0, 0);
-        enqueue!(tx, [1, 0, 2, 10]);
+        enqueue!(tx, [1, 0, 2]);
 
         let mut result = sp.eval(stream);
         assert_head_eq!(result, 1);
@@ -256,7 +256,7 @@ mod tests {
         let sp = map(plus_one);
 
         let (tx, stream) = OvereagerReceiver::channel(10, 0);
-        enqueue!(tx, [1, 10]);
+        enqueue!(tx, [1]);
 
         let mut result = sp.eval(stream);
         assert_head_eq!(result, 1);

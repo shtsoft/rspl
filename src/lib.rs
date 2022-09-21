@@ -3,26 +3,41 @@
 //! ## Design
 //!
 //! The idea of this stream processor language is to split the processing of streams into two parts:
-//! One part for reading (getting) the first element of an input stream to decide what to do with the rest of that input stream depending on that element.
+//! One part for reading (getting) the first element of an input stream to direct the further processing.
 //! Another part for writing (putting) something to the output stream and offering to process some input stream if needed.
 //! Combining these parts in various ways allows to flexibly construct stream processors as programs comprising a generalization of the well-known map-function on lists from functional programming.
 //!
-//! The following graphic illustrates how the two different kinds of stream processors ('getting' and 'putting') work:
+//! The following graphic illustrates how the two different kinds of stream processors ('getting' and 'putting') work (whereas a textual description is contained in the docs of [`StreamProcessor`]):
 //!
 //! <pre>
-//! h--t1--t2--t3--...          ha--t1--t2--t3--...
-//! -                           -
-//! |                           |
-//! | Get(h |-> [SP](h))        | Put(hb, LAZY-[SP])
-//! |                           |
-//! v                           |
-//! t1--t2--t3--...             |   t1--t2--t3--...
-//! -                           |   -
-//! |                           v   |
-//! | [SP](h)                   hb--| LAZY-[SP]
-//! |                               |
-//! v                               v
-//! ...                             ...
+//! h--t1--t2--t3--...                   ha--t1--t2--t3--...
+//! -                                    -
+//! |                                    |
+//! | Get(h |-> [SP](h))                 | Put(hb, LAZY-[SP])
+//! |                                    |
+//! v                                    |
+//! t1--t2--t3--...                      |   t1--t2--t3--...
+//! -                                    |   -
+//! |                                    v   |
+//! | [SP](h) = Get(_)                   hb--| LAZY-[SP]() = Get(_)
+//! |                                        |
+//! v                                        v
+//! ...                                      ...
+//!
+//!
+//! h--t1--t2--t3--...                   ha--t1--t2--t3--...
+//! -                                    -
+//! |                                    |
+//! | Get(h |-> [SP](h))                 | Put(hb, LAZY-[SP])
+//! |                                    |
+//! v                                    |
+//! h--t1--t2--t3--...                   |   ha--t1--t2--t3--...
+//! -                                    |   -
+//! |                                    v   |
+//! | [SP](h) = Put(_, _)                hb--| LAZY-[SP]() = Put(_, _)
+//! |                                        |
+//! v                                        v
+//! ...                                      ...
 //! </pre>
 //!
 //! ## Usage
@@ -107,9 +122,15 @@ type Lazy<'a, T> = dyn FnOnce() -> T + 'a;
 
 /// [`StreamProcessor<A, B>`] defines (the syntax of) a language describing the domain of stream processors, that is, terms which can be interpreted to turn streams of type `A` into streams of type `B`.
 pub enum StreamProcessor<'a, A: 'a, B> {
-    /// This stream processor first reads the `A` from the head of the input stream. Then it applies the its function argument to it yielding a stream processor. This stream processor is then applied to the tail of the input stream.
+    /// This stream processor first reads the `A` from the head of the input stream to subsequently apply its function argument to that element yielding a stream processor.
+    /// The resulting stream processor is then used to process the input stream further depending on its shape: if it is a
+    /// - [`Get`](`StreamProcessor::Get`) it is applied to the tail of the input stream.
+    /// - [`Put`](`StreamProcessor::Put`) it is applied to the whole input stream.
     Get(Box<dyn FnOnce(A) -> StreamProcessor<'a, A, B> + 'a>),
-    /// This stream processor writes the `B` from its first argument to the output list and use its second argument to process the input stream to generate the rest of the output list if needed.
+    /// This stream processor writes the `B` from its first argument to the output list.
+    /// Then to construct the rest of the output list it uses its second argument to process the input stream depending on its shape: if it is a
+    /// - [`Get`](`StreamProcessor::Get`) it is applied to the tail of the input stream.
+    /// - [`Put`](`StreamProcessor::Put`) it is applied to the whole input stream.
     Put(B, Box<Lazy<'a, StreamProcessor<'a, A, B>>>),
 }
 
@@ -165,10 +186,21 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
         A: Clone,
     {
         match self {
-            StreamProcessor::Get(f) => Self::eval(f(stream.head().clone()), stream.tail()),
-            StreamProcessor::Put(b, lazy_sp) => {
-                InfiniteList::Cons(b, Box::new(|| Self::eval(lazy_sp(), stream)))
-            }
+            StreamProcessor::Get(f) => match f(stream.head().clone()) {
+                StreamProcessor::Get(f) => Self::eval(StreamProcessor::Get(f), stream.tail()),
+                StreamProcessor::Put(b, lazy_sp) => {
+                    Self::eval(StreamProcessor::Put(b, lazy_sp), stream)
+                }
+            },
+            StreamProcessor::Put(b1, lazy_sp) => InfiniteList::Cons(
+                b1,
+                Box::new(|| match lazy_sp() {
+                    StreamProcessor::Get(f) => Self::eval(StreamProcessor::Get(f), stream.tail()),
+                    StreamProcessor::Put(b2, lazy_sp) => {
+                        Self::eval(StreamProcessor::Put(b2, lazy_sp), stream)
+                    }
+                }),
+            ),
         }
     }
 }
@@ -221,7 +253,7 @@ mod tests {
         });
 
         let (tx, stream) = OvereagerReceiver::channel(0, 0);
-        enqueue!(tx, [1, 2, 0]);
+        enqueue!(tx, [1, 2]);
 
         let mut result = sp.eval(stream);
         assert_head_eq!(result, 0);

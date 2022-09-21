@@ -87,7 +87,6 @@ fn test_events() {
             Event::Key(3),
             Event::ShiftDepressed,
             Event::Key(0),
-            Event::Key(0),
         ];
 
         for event in events {
