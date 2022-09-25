@@ -230,7 +230,7 @@ enum Feedback {
     TimeoutAfter(u64),
 }
 
-fn driver<S>(events: S, tfeedback: Sender<Feedback>)
+fn driver<S>(events: S, tfeedback: &Sender<Feedback>)
 where
     S: Stream<Event>,
 {
@@ -241,7 +241,7 @@ where
             Capability::SetVehicleLights(color) => println!("Vehicles: {}", color),
             Capability::SetPedestrianLights(color) => println!("Pedestrians: {}", color),
             Capability::EmitTimeoutAfter(length) => {
-                tfeedback.send(Feedback::TimeoutAfter(length)).unwrap()
+                tfeedback.send(Feedback::TimeoutAfter(length)).unwrap();
             }
             Capability::UnexpectedTimeout(message) => {
                 eprintln!("log: unexpected timeout event ({})", message);
@@ -265,25 +265,24 @@ fn main() {
     let (tevents, events) = OvereagerReceiver::channel(0, Event::Push);
     let (tfeedback, rfeedback) = channel::unbounded();
 
-    let tevents_input = tevents.clone();
-    let tevents_timer = tevents.clone();
-
     let _input_simulator = thread::spawn(move || {
+        let tevents_feedback = tevents.clone();
+
         let _feedback = thread::spawn(move || loop {
             match rfeedback.recv().unwrap() {
                 Feedback::TimeoutAfter(length) => {
-                    event_emitter(length, &tevents_timer, Event::Timeout)
+                    event_emitter(length, &tevents_feedback, Event::Timeout);
                 }
             }
         });
 
-        for __ in 0..10 {
-            event_emitter(5000, &tevents_input, Event::Push);
-            event_emitter(500, &tevents_input, Event::Push);
+        for _ in 0..10 {
+            event_emitter(5000, &tevents, Event::Push);
+            event_emitter(500, &tevents, Event::Push);
         }
 
-        event_emitter(0, &tevents_input, Event::Exit);
+        event_emitter(0, &tevents, Event::Exit);
     });
 
-    driver(events, tfeedback);
+    driver(events, &tfeedback);
 }
