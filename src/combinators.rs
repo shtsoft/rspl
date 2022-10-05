@@ -93,18 +93,28 @@ where
 /// compose(map(negate), map(negate)).eval(trues);
 /// ```
 pub fn compose<'a, A, B, C: 'a>(
-    sp1: StreamProcessor<'a, A, B>,
-    sp2: StreamProcessor<'a, B, C>,
+    mut sp1: StreamProcessor<'a, A, B>,
+    mut sp2: StreamProcessor<'a, B, C>,
 ) -> StreamProcessor<'a, A, C> {
-    match sp1 {
-        StreamProcessor::Get(f) => StreamProcessor::Get(Box::new(|a| compose(f(a), sp2))),
-        StreamProcessor::Put(b, lazy_sp1) => match sp2 {
-            StreamProcessor::Get(f) => compose(lazy_sp1(), f(b)),
-            StreamProcessor::Put(c, lazy_sp2) => StreamProcessor::Put(
-                c,
-                Box::new(|| compose(StreamProcessor::Put(b, lazy_sp1), lazy_sp2())),
-            ),
-        },
+    loop {
+        match sp1 {
+            StreamProcessor::Get(f) => {
+                return StreamProcessor::Get(Box::new(|a| compose(f(a), sp2)))
+            }
+            StreamProcessor::Put(b, lazy_sp1) => match sp2 {
+                StreamProcessor::Get(f) => {
+                    sp1 = lazy_sp1();
+                    sp2 = f(b);
+                    continue;
+                }
+                StreamProcessor::Put(c, lazy_sp2) => {
+                    return StreamProcessor::Put(
+                        c,
+                        Box::new(|| compose(StreamProcessor::Put(b, lazy_sp1), lazy_sp2())),
+                    )
+                }
+            },
+        }
     }
 }
 

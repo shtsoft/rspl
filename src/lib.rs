@@ -181,26 +181,33 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
     ///
     /// negate().eval(trues);
     /// ```
-    pub fn eval<S: Stream<A> + 'a>(self, stream: S) -> InfiniteList<'a, B>
+    pub fn eval<S: Stream<A> + 'a>(mut self, mut stream: S) -> InfiniteList<'a, B>
     where
         A: Clone,
     {
-        match self {
-            StreamProcessor::Get(f) => match f(stream.head().clone()) {
-                StreamProcessor::Get(f) => Self::eval(StreamProcessor::Get(f), stream.tail()),
-                StreamProcessor::Put(b, lazy_sp) => {
-                    Self::eval(StreamProcessor::Put(b, lazy_sp), stream)
-                }
-            },
-            StreamProcessor::Put(b1, lazy_sp) => InfiniteList::Cons(
-                b1,
-                Box::new(|| match lazy_sp() {
-                    StreamProcessor::Get(f) => Self::eval(StreamProcessor::Get(f), stream.tail()),
-                    StreamProcessor::Put(b2, lazy_sp) => {
-                        Self::eval(StreamProcessor::Put(b2, lazy_sp), stream)
+        loop {
+            match self {
+                StreamProcessor::Get(f) => {
+                    self = f(stream.head().clone());
+                    while let StreamProcessor::Get(f) = self {
+                        stream = stream.tail();
+                        self = f(stream.head().clone());
                     }
-                }),
-            ),
+                    continue;
+                }
+                StreamProcessor::Put(b, lazy_sp) => {
+                    return InfiniteList::Cons(
+                        b,
+                        Box::new(|| {
+                            let sp = lazy_sp();
+                            if let StreamProcessor::Get(_) = sp {
+                                stream = stream.tail();
+                            }
+                            Self::eval(sp, stream)
+                        }),
+                    )
+                }
+            }
         }
     }
 }
