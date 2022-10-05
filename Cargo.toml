@@ -15,3 +15,6 @@ crossbeam = "0.8"
 
 [[example]]
 name = "pelican"
+
+[[example]]
+name = "rspl_heapless"
