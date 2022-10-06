@@ -185,6 +185,14 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
     where
         A: Clone,
     {
+        // This implementation deviates from the original for two reasons:
+        // - rust does not guarantee tail-recursion elimination and rspl wants to prevent
+        //   stack-overflows as much as possible. Therefore the loop in lieu of recursion.
+        // - There are streams rspl programs can operate on where taking the tail can block as
+        //   opposed to the original implementation. So the question arising here is when to take
+        //   the tail of the input. The answer is, as late as possible, that is, only if the next
+        //   step is 'getting'. Because then 'putting' is not hindered. And this is as it should be
+        //   if taking rspl's idea of seperating input processing from output processing serious.
         loop {
             match self {
                 StreamProcessor::Get(f) => {
