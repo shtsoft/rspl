@@ -3,6 +3,8 @@
 
 use super::StreamProcessor;
 
+use alloc::boxed::Box;
+
 /// The function combines two stream processors into one alternating between the two whenever something is written to the ouput stream.
 /// - `sp1` is the stream processor which is in control.
 /// - `sp2` is the stream processor to which control is transferred.
@@ -180,6 +182,7 @@ where
     }))
 }
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -56,7 +56,7 @@
 //! rspl can serve as a framework for the nifty idea of event-driven programming with finite state machines as suggested [here](https://barrgroup.com/Embedded-Systems/How-To/State-Machines-Event-Driven-Systems). The example for the pattern there is implemented concretely as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/events.rs) for rspl and abstractly in the following to demonstrate the [usage](#usage) of rspl:
 //!
 //! ```
-//! use rspl::streams::overeager_receivers::OvereagerReceiver;
+//! use rspl::streams::infinite_lists::InfiniteList;
 //! use rspl::streams::Stream;
 //! use rspl::StreamProcessor;
 //!
@@ -64,11 +64,6 @@
 //! enum Event {
 //!     Event1,
 //!     Event2,
-//! }
-//!
-//! struct Initial<'a, A, B> {
-//!     state: StreamProcessor<'a, A, B>,
-//!     event: Event,
 //! }
 //!
 //! fn action() -> bool {
@@ -97,18 +92,15 @@
 //!     StreamProcessor::get(transition)
 //! }
 //!
-//! let initial = Initial {
-//!     state: state_1(),
-//!     event: Event::Event1,
-//! };
+//! let events = InfiniteList::constant(Event::Event1);
 //!
-//! let (tevents, events) = OvereagerReceiver::channel(0, initial.event);
-//! tevents.send(Event::Event2).unwrap();
-//!
-//! let event_loop_body = initial.state.eval(events);
+//! let event_loop_body = state_2().eval(events);
 //!
 //! assert!(event_loop_body.head());
 //! ```
+
+#![cfg_attr(not(feature = "std"), no_std)]
+extern crate alloc;
 
 pub mod combinators;
 
@@ -116,6 +108,8 @@ pub mod streams;
 
 use streams::infinite_lists::InfiniteList;
 use streams::Stream;
+
+use alloc::boxed::Box;
 
 /// [`Lazy<T>`] types thunks of type `T`.
 type Lazy<'a, T> = dyn FnOnce() -> T + 'a;
@@ -220,6 +214,7 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
     }
 }
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -2,6 +2,8 @@
 
 use super::Stream;
 
+use alloc::boxed::Box;
+
 /// [`Lazy<T>`] types thunks of type `T`.
 type Lazy<'a, T> = dyn FnOnce() -> T + 'a;
 

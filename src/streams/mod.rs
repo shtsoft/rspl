@@ -2,6 +2,8 @@
 //! Additionally, the module declares submodules with implementations of the trait.
 
 pub mod infinite_lists;
+
+#[cfg(feature = "std")]
 pub mod overeager_receivers;
 
 /// A characterization of streams of some type `X`: a stream of `X` is an object from which one can observe something of type `X` (the head of the stream) or another stream of `X` (the tail of the stream).
@@ -35,6 +37,7 @@ pub trait Stream<X> {
 ///
 /// rspl::streams::print(ascending(0), 5);
 /// ```
+#[cfg(feature = "std")]
 pub fn print<X, S>(mut stream: S, n: usize) -> S
 where
     S: Stream<X>,
@@ -50,7 +53,10 @@ where
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "std")]
     use super::*;
+
+    #[cfg(feature = "std")]
     use infinite_lists::InfiniteList;
 
     #[macro_export]
@@ -70,6 +76,7 @@ mod tests {
         };
     }
 
+    #[cfg(feature = "std")]
     #[test]
     fn test_print() {
         let stream = InfiniteList::cons(

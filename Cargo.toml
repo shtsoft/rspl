@@ -11,4 +11,20 @@ keywords = ["language", "stream-processing", "streams", "events", "state-machine
 categories = ["asynchronous", "embedded"]
 
 [dependencies]
-crossbeam = "0.8"
+crossbeam = { version = "0.8", optional = true }
+
+[features]
+default = ["std"]
+std = ["crossbeam"]
+
+[[test]]
+name = "basic"
+required-features = ["std"]
+
+[[test]]
+name = "load"
+required-features = ["std"]
+
+[[test]]
+name = "events"
+required-features = ["std"]
