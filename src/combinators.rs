@@ -153,6 +153,35 @@ where
     }))
 }
 
+/// Construct the stream processor which produces an output without reading from the input according to a function remembering its state.
+/// - `body` is the function producing the output in state-passing style.
+/// - `state` is the initial state.
+///
+/// The function is in analogy to defining generators as the output is essentially a generator.
+///
+/// # Examples
+///
+/// Generate the stream `0, 1, 2, 0, 1, 2, 0, ...`:
+///
+/// ```
+/// use rspl::combinators::generate;
+/// use rspl::streams::infinite_lists::InfiniteList;
+/// use rspl::StreamProcessor;
+///
+/// let int_mod_3 = |n: usize| (n % 3, n + 1);
+///
+/// let units = InfiniteList::constant(());
+///
+/// generate(int_mod_3, 0).eval(units);
+/// ```
+pub fn generate<'a, A, B, S: 'a, F>(body: F, state: S) -> StreamProcessor<'a, A, B>
+where
+    F: Fn(S) -> (B, S) + 'a,
+{
+    let (x, state) = body(state);
+    StreamProcessor::Put(x, Box::new(|| generate(body, state)))
+}
+
 /// Construct the stream processor which applies a given closure to each element of the input stream.
 /// - `f` is the closure to be applied.
 ///
@@ -260,6 +289,20 @@ mod tests {
         let mut result = sp.eval(stream);
         assert_head_eq!(result, 1);
         assert_tail_starts_with!(result, [2]);
+    }
+
+    #[test]
+    fn test_generate() {
+        let ascending = |n: usize| (n, n + 1);
+
+        let sp = generate(ascending, 10);
+
+        let (tx, stream) = OvereagerReceiver::channel(0, 0);
+        enqueue!(tx, [0]);
+
+        let mut result = sp.eval(stream);
+        assert_head_eq!(result, 10);
+        assert_tail_starts_with!(result, [11]);
     }
 
     #[test]
