@@ -82,13 +82,13 @@ const NATURAL_INCREASE: HeatIndexSpace = HeatIndexSpace {
 };
 
 const TICK_LENGTH: u64 = 5; // in (real) millis
-const TICK: u64 = 1; // shall represents 10 (real) seconds
+const TICK: u64 = 1; // shall represent 10 (real) seconds
 const DAY: u64 = 8640 * TICK;
 const DWELL_TIME: u64 = 6 * TICK;
 const CONTROL_PERIOD: u64 = 180 * TICK;
 const NATURAL_INCREASE_PERIOD: u64 = 3 * TICK;
 
-const UNSAFE_BARRIER: usize = 100000;
+const UNSAFE_BARRIER: usize = 100_000;
 const SERVICE_BARRIER: usize = UNSAFE_BARRIER - 5000;
 
 type HeatIndex = f64;
@@ -108,13 +108,13 @@ enum HeatIndexSignal {
 }
 
 #[derive(Clone)]
-struct HICS {
+struct Hics {
     clock_finger: Arc<Clock>,
     thermohygrometer_finger: Arc<Mutex<HeatIndexSpace>>,
     signals_s: Sender<HeatIndexSignal>,
 }
 
-impl<'a> control::System<'a, HeatIndexSpace> for HICS {
+impl<'a> control::System<'a, HeatIndexSpace> for Hics {
     fn meter(&self) -> StreamProcessor<'a, (), HeatIndexSpace> {
         fn read_out<'a, X: 'a + Copy>(finger: Arc<Mutex<X>>) -> StreamProcessor<'a, (), X> {
             StreamProcessor::Put(
@@ -176,8 +176,9 @@ impl<'a> control::System<'a, HeatIndexSpace> for HICS {
     }
 }
 
-fn driver(hics: HICS) {
-    fn control<'a>(hics: HICS, mut counter: usize) -> StreamProcessor<'a, (), usize> {
+#[allow(clippy::assertions_on_constants)]
+fn driver(hics: Hics) {
+    fn control<'a>(hics: Hics, mut counter: usize) -> StreamProcessor<'a, (), usize> {
         control::MeasureOnDemand {
             dwell_time: Duration::from_millis(DWELL_TIME * TICK_LENGTH),
         }
@@ -188,7 +189,7 @@ fn driver(hics: HICS) {
         StreamProcessor::Put(counter, Box::new(move || control(hics, counter)))
     }
 
-    assert!(UNSAFE_BARRIER - SERVICE_BARRIER > 0);
+    assert!(UNSAFE_BARRIER > SERVICE_BARRIER);
 
     let mut runs = control(hics, 0).eval(InfiniteList::constant(()));
     loop {
@@ -210,6 +211,25 @@ fn driver(hics: HICS) {
 }
 
 fn main() {
+    fn print_heat_index_event(time: Time, heat_index: HeatIndex) {
+        let red = |x| (x * 16.0 - 1350.0) as u8;
+        let green = 25;
+        let blue = |x| (1450.0 - x * 16.0) as u8;
+        // The cryptic part of the following `format!(...)` is just an ANSI escape code to get `format!({:.1}°F, heat_index)` with a truecolor R(ed)G(reen)B(lue) background.
+        let degree = format!(
+            "\x1b[48;2;{};{};{}m{:.1}°F\x1b[0m",
+            red(heat_index),
+            green,
+            blue(heat_index),
+            heat_index,
+        );
+
+        let to_minutes = |x| (x as f64 / 6.0) % 1440.0;
+        let time = format!("6am plus {:.1} minutes", to_minutes(time));
+
+        println!("Heat Index Event: {} at {}", degree, time);
+    }
+
     let clock = Arc::new(AtomicU64::new(0));
     let clock_finger = Arc::clone(&clock);
 
@@ -221,7 +241,7 @@ fn main() {
 
     let (signals_s, signals_r) = channel::unbounded();
 
-    let hics = HICS {
+    let hics = Hics {
         clock_finger,
         thermohygrometer_finger,
         signals_s,
@@ -230,7 +250,7 @@ fn main() {
     let _clock_simulator = thread::spawn(move || loop {
         thread::sleep(Duration::from_millis(TICK_LENGTH));
 
-        clock.store(clock.load(Ordering::SeqCst) + TICK, Ordering::SeqCst)
+        clock.store(clock.load(Ordering::SeqCst) + TICK, Ordering::SeqCst);
     });
 
     let _thermohygrometer_simulator = thread::spawn(move || {
@@ -241,13 +261,7 @@ fn main() {
 
             let mut position = thermohygrometer_finger.lock().unwrap();
             match signal {
-                HeatIndexSignal::Show(time, heat_index) => println!(
-                    "Heat Index Event: \x1b[48;2;{};25;{}m{:.1}°F\x1b[0m at 6am plus {:.1} minutes",
-                    (heat_index * 16.0 - 1350.0) as u8,
-                    (-heat_index * 16.0 + 1450.0) as u8,
-                    heat_index,
-                    (time as f64 / 6.0) % 1440.0
-                ),
+                HeatIndexSignal::Show(time, heat_index) => print_heat_index_event(time, heat_index),
                 HeatIndexSignal::Dehumidify => position.humidity -= ACTUATOR_DECREASE.humidity,
                 HeatIndexSignal::Cool => position.temperature -= ACTUATOR_DECREASE.temperature,
             }
