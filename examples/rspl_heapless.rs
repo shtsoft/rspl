@@ -1,3 +1,7 @@
+//&# rspl Heapless
+//&
+
+//&```rust
 use rspl::streams::Stream;
 
 struct ComatchConstant<X> {
@@ -159,3 +163,4 @@ fn main() {
 
     rspl::streams::print(stream, 1_000_000);
 }
+//&```rust
