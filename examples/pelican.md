@@ -20,8 +20,6 @@ On the one hand, stream processors are able to output something and hence allow 
 On the other, hand stream processors can have side effects expanding the domain by effectful machines.\
 Now, while it is nice to be able to encode effectful (Mealy) machines instead of only ordinary finite state machines, having the effect-implementations baked into the machine can be unfavorable for reasons of modularity and control.[^1]
 
-[^1]: See monads and effect handlers in that regard.
-
 To mitigate those problems a possible approach is to reflect all possible effects into the stream processors output type.
 Then the effects become a stream of capabilities the machine requires the operator to provide in order to make progress.
 This improves modularity since the machine logic is seperated from its side effects.
@@ -376,3 +374,5 @@ fn main() {
 The closing remarks shall just outline possible future work on event-driven programming with rspl: one thing which is conceivable is to develop some sort of domain specific language helping with implementing arbitrary hierarchical state machines.
 It could consist of only some clever macros but it could also be something more sophisticated like an uml-like language which is compiled to rust with rspl.
 Another - admittedly somewhat more fantastical - possibility is a library of generic rspl-encoded machines which can specialized by client code according to their needs by providing capabilities.
+
+[^1]: See monads and effect handlers in that regard.

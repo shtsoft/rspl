@@ -8,9 +8,6 @@ rspl uses the heap essentially for laziness when it thunks stream processing and
 This is because in those cases rust does not statically determine the size of the thunks.
 Assisting rust in that regard by converting those closures eliminates the need for a heap.\
 What we mean by converting closures here can be understood by looking at the example of streams as codata[^1].
-
-[^1]: A modern take on OOP generalizing closures (see e.g. [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf)).
-
 In Agda one defines streams of type `X` (extensionally) by the codata type
 ```agda
 record StreamX : Set where
@@ -222,3 +219,5 @@ fn main() {
 The tentative conclusion is that while the approach seems doable it has significant negative consequences: stream processors become harder to understand and more tedious to write.
 Therefore the approach is impractical.
 At least, without a better language frontend.
+
+[^1]: A modern take on OOP generalizing closures (see e.g. [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf)).

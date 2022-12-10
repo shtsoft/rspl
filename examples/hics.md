@@ -13,8 +13,6 @@ So adapting the techniques specifically to rspl and rust yields a modular implem
 
 The intention of the example is to demonstrate rspl's applicability in demand-driven[^1] programming.
 
-[^1]: Look at [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf) for some more explanation on that term.
-
 Now that we have said what we are going to implement and why let us explain our techniques before
 presenting the code applying those techniques.
 To this end we split the following discussion in two parts.
@@ -27,7 +25,6 @@ To understand how, first note that rspl's stream processors would implement the 
 This is because implementing a stream processor from `A` to `B` corresponds to defining a function from `Stream<A>` to `Stream<B>`.
 So, if `A` is the input signature and `B` the yield type of a generator then that generator could be encoded as stream processor from `A` to `B` provided that a way to remember state information is available.
 However, the perhaps most common approach to state in functional programming - and rspl is functional programming - is state-passing-style[^2].
-[^2]: Also see the concept of monads which kind of subsumes foobar-passing-style.
 And, in fact, state-passing is applicable to rspl's stream processors.
 One way is to construct a stream processor by a rust function with a single parameter representing the state returning a stream processor capturing that state within a (lazy) recursive call.
 The returned stream processor of such a function is a generator and the pattern of such a function is as follows:
@@ -353,3 +350,6 @@ However, it is not so clear why to use rspl to encode generators in general.
 Indeed, this is also not quite what we wanted to show.
 The idea is rather to show that rspl's stream processors can naturally incorporate demand-driven programming making them particularly useful to stream processing problems with demand-driven aspects.
 It might be that the hics implemented here is not the best possible example to do so but the best we could come up with as of yet which is real-world enough while still being focused on the `put`-construct of rspl.
+
+[^1]: Look at [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf) for some more explanation on that term.
+[^2]: Also see the concept of monads which kind of subsumes foobar-passing-style.
