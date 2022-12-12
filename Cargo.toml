@@ -28,3 +28,12 @@ required-features = ["std"]
 [[test]]
 name = "events"
 required-features = ["std"]
+
+[[example]]
+name = "hics"
+
+[[example]]
+name = "pelican"
+
+[[example]]
+name = "rspl_heapless"
