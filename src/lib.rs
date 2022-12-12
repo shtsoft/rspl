@@ -73,7 +73,7 @@
 //! fn state_1<'a>() -> StreamProcessor<'a, Event, bool> {
 //!     fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
 //!         match event {
-//!             Event::Event1 => StreamProcessor::put(action(), state_1()),
+//!             Event::Event1 => StreamProcessor::put(action(), state_1),
 //!             Event::Event2 => state_2(),
 //!         }
 //!     }
@@ -85,7 +85,7 @@
 //!     fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
 //!         match event {
 //!             Event::Event1 => state_1(),
-//!             Event::Event2 => StreamProcessor::put(false, state_2()),
+//!             Event::Event2 => StreamProcessor::put(false, state_2),
 //!         }
 //!     }
 //!
@@ -138,13 +138,14 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
         StreamProcessor::Get(Box::new(f))
     }
 
-    /// The same as [`StreamProcessor::Put`] but with thunking and boxing of `sp` hidden to make the resulting code less verbose.
+    /// The same as [`StreamProcessor::Put`] but with boxing of `lazy_sp` hidden to make the resulting code less verbose.
     #[inline]
-    pub fn put(b: B, sp: Self) -> Self
+    pub fn put<T>(b: B, lazy_sp: T) -> Self
     where
         B: 'a,
+        T: FnOnce() -> Self + 'a,
     {
-        StreamProcessor::Put(b, Box::new(|| sp))
+        StreamProcessor::Put(b, Box::new(lazy_sp))
     }
 }
 
@@ -168,7 +169,7 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
     /// use rspl::StreamProcessor;
     ///
     /// fn negate<'a>() -> StreamProcessor<'a, bool, bool> {
-    ///     StreamProcessor::get(|b: bool| StreamProcessor::put(!b, negate()))
+    ///     StreamProcessor::get(|b: bool| StreamProcessor::put(!b, negate))
     /// }
     ///
     /// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);
@@ -240,7 +241,7 @@ mod tests {
     #[test]
     fn test_put() {
         assert!(matches!(
-            StreamProcessor::put((), map(id)),
+            StreamProcessor::put((), || map(id)),
             StreamProcessor::Put(_, _)
         ));
     }
@@ -248,18 +249,17 @@ mod tests {
     #[test]
     fn test_eval() {
         let sp = StreamProcessor::get(|n: usize| {
-            StreamProcessor::put(
-                n,
+            StreamProcessor::put(n, || {
                 StreamProcessor::get(|n1: usize| {
                     StreamProcessor::get(move |n2: usize| {
                         if n1 < n2 {
-                            StreamProcessor::put(n2, StreamProcessor::put(n1, map(id)))
+                            StreamProcessor::put(n2, move || StreamProcessor::put(n1, || map(id)))
                         } else {
-                            StreamProcessor::put(n1, StreamProcessor::put(n2, map(id)))
+                            StreamProcessor::put(n1, move || StreamProcessor::put(n2, || map(id)))
                         }
                     })
-                }),
-            )
+                })
+            })
         });
 
         let (tx, stream) = OvereagerReceiver::channel(0, 0);
@@ -274,7 +274,7 @@ mod tests {
     #[should_panic]
     fn test_eval_panic() {
         let sp = StreamProcessor::get(|b: bool| {
-            StreamProcessor::put(if b { panic!() } else { b }, map(id))
+            StreamProcessor::put(if b { panic!() } else { b }, || map(id))
         });
 
         let trues = InfiniteList::constant(true);

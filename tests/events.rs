@@ -31,9 +31,9 @@ fn test_events() {
     fn default<'a>() -> StreamProcessor<'a, Event, bool> {
         fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
             match event {
-                Event::ShiftDepressed => StreamProcessor::put(true, shifted()),
+                Event::ShiftDepressed => StreamProcessor::put(true, shifted),
                 Event::ShiftReleased => default(),
-                Event::Key(c) => StreamProcessor::put(key_action('+', c), default()),
+                Event::Key(c) => StreamProcessor::put(key_action('+', c), default),
             }
         }
 
@@ -44,8 +44,8 @@ fn test_events() {
         fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
             match event {
                 Event::ShiftDepressed => shifted(),
-                Event::ShiftReleased => StreamProcessor::put(true, default()),
-                Event::Key(c) => StreamProcessor::put(key_action('-', c), shifted()),
+                Event::ShiftReleased => StreamProcessor::put(true, default),
+                Event::Key(c) => StreamProcessor::put(key_action('-', c), shifted),
             }
         }
 

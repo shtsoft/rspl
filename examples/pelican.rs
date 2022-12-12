@@ -121,7 +121,7 @@ mod pelican_machine {
         };
 
         ( $output:expr, $( $rest:expr ),+ ) => {
-            StreamProcessor::put($output, mealy!($( $rest ),+))
+            StreamProcessor::put($output, || mealy!($( $rest ),+))
         };
     }
 

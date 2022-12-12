@@ -17,7 +17,7 @@ fn test_basic() {
     // a silly stream processor
     let sp_aux = StreamProcessor::get(|n1: usize| {
         StreamProcessor::get(move |n2: usize| {
-            StreamProcessor::put(n2, StreamProcessor::put(n1, map(id)))
+            StreamProcessor::put(n2, move || StreamProcessor::put(n1, || map(id)))
         })
     });
     let sp = bind(map(is_zero), |b| {
