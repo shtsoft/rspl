@@ -12,7 +12,7 @@ They illustrate that by modularizing on demand computations of perhaps infinite 
 As the hics described above shares that 'on demand computation'-aspect - most notably, it measures (that is, reads out the thermohygrometer) on demand - these modularization techniques will apply in that case, too.
 Adapting the techniques to rspl and rust yields a modular implementation of the addressed hics in rust.
 
-The intention of the example is to demonstrate rspl's applicability in demand-driven[^1] programming.
+The intention of the example is to demonstrate rspl's applicability in demand-driven[^1] programming (with generators, of course).
 
 Now that we have said what we are going to implement and why let us explain our techniques before
 presenting the code applying those techniques.
@@ -27,11 +27,11 @@ This is because implementing a stream processor from `A` to `B` in rspl correspo
 So, if `A` is the input signature and `B` the yield type of a generator then that generator could be encoded as stream processor from `A` to `B` provided that a way to remember state information is available.
 Now the perhaps most common approach to state in functional programming - and rspl is functional programming - is state-passing-style[^2].
 And, in fact, state-passing is applicable to rspl's stream processors.
-One way is to construct a stream processor by a rust function with a single parameter representing the state returning a stream processor capturing that state within a (lazy) recursive call like in
+One way is to construct a stream processor by a rust function with a single parameter representing the state returning a stream processor capturing a computation of the perhaps manipulated state within a (lazy) recursive call like in
 ```rust
-fn generator<'a, S, A, B>(state: S) -> StreamProcessor<'a, A, B> {
+fn generator<'a, S, A, B>(mut state: S) -> StreamProcessor<'a, A, B> {
     ...;
-    StreamProcessor::get(|a: A| StreamProcessor::put(..., || generator(state)))
+    StreamProcessor::get(|a: A| StreamProcessor::put(..., || generator(...state...)))
 }
 ```
 The returned stream processor of such a function is a generator where the dots are the body of that generator.
