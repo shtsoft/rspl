@@ -22,11 +22,15 @@ name = "basic"
 required-features = ["std"]
 
 [[test]]
-name = "load"
+name = "demands"
 required-features = ["std"]
 
 [[test]]
 name = "events"
+required-features = ["std"]
+
+[[test]]
+name = "load"
 required-features = ["std"]
 
 [[example]]
