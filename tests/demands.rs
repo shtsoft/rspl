@@ -12,12 +12,12 @@ fn test_demands() {
     const STEPS_PI: usize = 5;
     const STEPS_EXP: usize = 10;
 
-    // Sequences by recursion: compute the square root of 2 via the Babylonian method.
+    // compute the square root of 2 via the Babylonian method
     fn babylon2<'a>(x: f64) -> StreamProcessor<'a, (), f64> {
         StreamProcessor::put(x, move || babylon2((x + 2.0 / x) / 2.0))
     }
 
-    // Seqeunces by partial sum: compute pi by Bailey-Borwein-Plouffe formula.
+    // compute pi by Bailey-Borwein-Plouffe formula
     fn bbp<'a>(partial_sum: f64, k: u32) -> StreamProcessor<'a, (), f64> {
         let bbp_sequence = |k| {
             (1.0 / f64::from(i32::pow(16, k)))
@@ -32,7 +32,7 @@ fn test_demands() {
         })
     }
 
-    // Seqeunces by partial sum: compute Euler's number.
+    // compute Euler's number
     fn euler<'a>(partial_sum: f64, k: u32, kfac: u32) -> StreamProcessor<'a, (), f64> {
         let euler_sequence = |kfac| 1.0 / f64::from(kfac);
 
@@ -46,5 +46,6 @@ fn test_demands() {
     let exp = *print(euler(1.0, 1, 1).eval(InfiniteList::constant(())), STEPS_EXP).head();
 
     let important_number = sqrt2 * pi * exp;
+
     assert!(f64::abs(important_number - IMPORTANT_NUMBER_REFERENCE) < EPS);
 }

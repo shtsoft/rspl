@@ -92,11 +92,9 @@
 //!     StreamProcessor::get(transition)
 //! }
 //!
-//! let events = InfiniteList::constant(Event::Event1);
+//! let event_loop = state_2().eval(InfiniteList::constant(Event::Event1));
 //!
-//! let event_loop_body = state_2().eval(events);
-//!
-//! assert!(event_loop_body.head());
+//! assert!(event_loop.head());
 //! ```
 //!
 //! rspl can serve as a framework for the nifty idea of demand-driven programming with generators as suggested [here](https://www.cse.chalmers.se/~rjmh/Papers/whyfp.pdf). The example for the pattern there is implemented concretely as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/demands.rs) for rspl and abstractly in the following to demonstrate the [usage](#usage) of rspl:
@@ -130,9 +128,9 @@
 //!     })
 //! }
 //!
-//! let generator_name = generator_name(State { toggle: false }).eval(InfiniteList::constant(()));
+//! let generations = generator_name(State { toggle: false }).eval(InfiniteList::constant(()));
 //!
-//! assert!(generator_name.head());
+//! assert!(generations.head());
 //! ```
 
 #![cfg_attr(not(feature = "std"), no_std)]

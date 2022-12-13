@@ -7,16 +7,16 @@ use std::time::Duration;
 
 #[test]
 fn test_events() {
+    const RUNS_REFERENCE: usize = 9;
+
+    const CHANNEL_SIZE: usize = 100;
+    const INPUT_LATENCY: u64 = 100; // in millis
+
     #[derive(Copy, Clone)]
     enum Event {
         ShiftDepressed,
         ShiftReleased,
         Key(u8),
-    }
-
-    struct Initial<'a, A, B> {
-        state: StreamProcessor<'a, A, B>,
-        event: Event,
     }
 
     fn key_action(sign: char, c: u8) -> bool {
@@ -28,6 +28,7 @@ fn test_events() {
         }
     }
 
+    // the state where shift is released
     fn default<'a>() -> StreamProcessor<'a, Event, bool> {
         fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
             match event {
@@ -40,6 +41,7 @@ fn test_events() {
         StreamProcessor::get(transition)
     }
 
+    // the state where shift is depressed
     fn shifted<'a>() -> StreamProcessor<'a, Event, bool> {
         fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
             match event {
@@ -66,15 +68,9 @@ fn test_events() {
         n
     }
 
-    let initial = Initial {
-        state: default(),
-        event: Event::ShiftReleased,
-    };
+    let (tevents, events) = OvereagerReceiver::channel(CHANNEL_SIZE, Event::ShiftReleased);
 
-    let (tevents, events) = OvereagerReceiver::channel(100, initial.event);
     let input_simulator = thread::spawn(move || {
-        let wait = || thread::sleep(Duration::from_millis(100));
-
         let events = [
             Event::Key(1),
             Event::ShiftDepressed,
@@ -90,12 +86,14 @@ fn test_events() {
         ];
 
         for event in events {
+            thread::sleep(Duration::from_millis(INPUT_LATENCY));
             tevents.send(event).unwrap();
-            wait();
         }
     });
 
-    assert_eq!(looping(initial.state.eval(events)), 9);
+    let runs = looping(default().eval(events));
 
     input_simulator.join().unwrap();
+
+    assert_eq!(runs, RUNS_REFERENCE);
 }
