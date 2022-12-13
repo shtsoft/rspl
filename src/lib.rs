@@ -98,6 +98,42 @@
 //!
 //! assert!(event_loop_body.head());
 //! ```
+//!
+//! rspl can serve as a framework for the nifty idea of demand-driven programming with generators as suggested [here](https://www.cse.chalmers.se/~rjmh/Papers/whyfp.pdf). The example for the pattern there is implemented concretely as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/demands.rs) for rspl and abstractly in the following to demonstrate the [usage](#usage) of rspl:
+//!
+//! ```
+//! use rspl::streams::infinite_lists::InfiniteList;
+//! use rspl::streams::Stream;
+//! use rspl::StreamProcessor;
+//!
+//! struct State {
+//!     toggle: bool,
+//! }
+//!
+//! fn action(state: &mut State) {
+//!     state.toggle = !state.toggle;
+//! }
+//!
+//! fn pre_action(state: State) -> State {
+//!     state
+//! }
+//!
+//! fn post_action(state: State) -> State {
+//!     state
+//! }
+//!
+//! fn generator_name<'a>(mut state: State) -> StreamProcessor<'a, (), bool> {
+//!     state = pre_action(state);
+//!     StreamProcessor::get(|_| {
+//!         action(&mut state);
+//!         StreamProcessor::put(state.toggle, || generator_name(post_action(state)))
+//!     })
+//! }
+//!
+//! let generator_name = generator_name(State { toggle: false }).eval(InfiniteList::constant(()));
+//!
+//! assert!(generator_name.head());
+//! ```
 
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
