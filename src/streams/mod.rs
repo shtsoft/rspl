@@ -79,13 +79,11 @@ mod tests {
     #[cfg(feature = "std")]
     #[test]
     fn test_print() {
-        let stream = InfiniteList::cons(
-            false,
-            InfiniteList::cons(
-                false,
-                InfiniteList::cons(true, InfiniteList::constant(true)),
-            ),
-        );
+        let stream = InfiniteList::cons(false, || {
+            InfiniteList::cons(false, || {
+                InfiniteList::cons(true, || InfiniteList::constant(true))
+            })
+        });
 
         let stream = print(stream, 2);
         assert!(stream.head());

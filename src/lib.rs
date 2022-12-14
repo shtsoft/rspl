@@ -67,7 +67,7 @@
 //! let minus_one = |n: usize| n - 1;
 //!
 //! let zeroes = compose(filter(is_greater_zero), map(minus_one))
-//!     .eval(InfiniteList::cons(0, InfiniteList::constant(1)));
+//!     .eval(InfiniteList::cons(0, || InfiniteList::constant(1)));
 //!
 //! assert_eq!(*zeroes.head(), 0);
 //! ```

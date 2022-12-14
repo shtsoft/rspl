@@ -14,10 +14,13 @@ pub enum InfiniteList<'a, X: 'a> {
 }
 
 impl<'a, X> InfiniteList<'a, X> {
-    /// The same as [`InfiniteList::Cons`] but with thunking and boxing of `inflist` hidden to make the resulting code less verbose.
+    /// The same as [`InfiniteList::Cons`] but with boxing of `lazy_inflist` hidden to make the resulting code less verbose.
     #[inline]
-    pub fn cons(x: X, inflist: Self) -> Self {
-        InfiniteList::Cons(x, Box::new(|| inflist))
+    pub fn cons<T>(x: X, lazy_inflist: T) -> Self
+    where
+        T: FnOnce() -> Self + 'a,
+    {
+        InfiniteList::Cons(x, Box::new(lazy_inflist))
     }
 }
 
@@ -66,7 +69,7 @@ mod tests {
     #[test]
     fn test_cons() {
         assert!(matches!(
-            InfiniteList::cons((), InfiniteList::constant(())),
+            InfiniteList::cons((), || InfiniteList::constant(())),
             InfiniteList::Cons(_, _)
         ));
     }
@@ -82,16 +85,15 @@ mod tests {
 
     #[test]
     fn test_head() {
-        let inflist = InfiniteList::cons(true, InfiniteList::constant(false));
+        let inflist = InfiniteList::cons(true, || InfiniteList::constant(false));
         assert!(inflist.head());
     }
 
     #[test]
     fn test_tail() {
-        let inflist = InfiniteList::cons(
-            false,
-            InfiniteList::cons(true, InfiniteList::constant(true)),
-        );
+        let inflist = InfiniteList::cons(false, || {
+            InfiniteList::cons(true, || InfiniteList::constant(true))
+        });
         assert!(inflist.tail().head());
     }
 }

@@ -136,7 +136,7 @@ pub fn compose<'a, A, B, C: 'a>(
 ///
 /// let is_greater_zero = |n: &usize| *n > 0;
 ///
-/// let ones = InfiniteList::constant(1);
+/// let ones = || InfiniteList::constant(1);
 ///
 /// filter(is_greater_zero).eval(InfiniteList::cons(0, ones));
 /// ```
