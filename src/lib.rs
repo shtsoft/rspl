@@ -53,85 +53,113 @@
 //!
 //! # Examples
 //!
-//! rspl can serve as a framework for the nifty idea of event-driven programming with finite state machines as suggested [here](https://barrgroup.com/Embedded-Systems/How-To/State-Machines-Event-Driven-Systems). The example for the pattern there is implemented concretely as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/events.rs) for rspl and abstractly in the following to demonstrate the [usage](#usage) of rspl:
+//! Of course, rspl supports orthodox 'combination-driven' stream processing as it is known from list processing with combinators like [`compose`](`combinators::compose`), [`filter`](`combinators::filter`) and [`map`](`combinators::map`).
+//! For example, one could first filter some 'bad' elements out of a stream in order to safely iterate some function over the resulting stream afterwards.
+//! Such a [usage](#usage) of rspl looks like:
 //!
 //! ```
+//! use rspl::combinators::{compose, filter, map};
 //! use rspl::streams::infinite_lists::InfiniteList;
 //! use rspl::streams::Stream;
 //! use rspl::StreamProcessor;
 //!
-//! #[derive(Copy, Clone)]
-//! enum Event {
-//!     Event1,
-//!     Event2,
-//! }
+//! let is_greater_zero = |n: &usize| *n > 0;
+//! let minus_one = |n: usize| n - 1;
 //!
-//! fn action() -> bool {
-//!     true
-//! }
+//! let zeroes = compose(filter(is_greater_zero), map(minus_one))
+//!     .eval(InfiniteList::cons(0, InfiniteList::constant(1)));
 //!
-//! fn state_1<'a>() -> StreamProcessor<'a, Event, bool> {
-//!     fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
-//!         match event {
-//!             Event::Event1 => StreamProcessor::put(action(), state_1),
-//!             Event::Event2 => state_2(),
-//!         }
-//!     }
-//!
-//!     StreamProcessor::get(transition)
-//! }
-//!
-//! fn state_2<'a>() -> StreamProcessor<'a, Event, bool> {
-//!     fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
-//!         match event {
-//!             Event::Event1 => state_1(),
-//!             Event::Event2 => StreamProcessor::put(false, state_2),
-//!         }
-//!     }
-//!
-//!     StreamProcessor::get(transition)
-//! }
-//!
-//! let event_loop = state_2().eval(InfiniteList::constant(Event::Event1));
-//!
-//! assert!(event_loop.head());
+//! assert_eq!(*zeroes.head(), 0);
 //! ```
 //!
-//! rspl can serve as a framework for the nifty idea of demand-driven programming with generators as suggested [here](https://www.cse.chalmers.se/~rjmh/Papers/whyfp.pdf). The example for the pattern there is implemented concretely as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/demands.rs) for rspl and abstractly in the following to demonstrate the [usage](#usage) of rspl:
+//! More interestingly, rspl can also serve as a framework for the nifty idea of
+//! - event-driven programming with state machines as suggested [here](https://barrgroup.com/Embedded-Systems/How-To/State-Machines-Event-Driven-Systems).
+//!   Abstractly, that [usage](#usage) of rspl looks as follows:
 //!
-//! ```
-//! use rspl::streams::infinite_lists::InfiniteList;
-//! use rspl::streams::Stream;
-//! use rspl::StreamProcessor;
+//!   ```
+//!   use rspl::streams::infinite_lists::InfiniteList;
+//!   use rspl::streams::Stream;
+//!   use rspl::StreamProcessor;
 //!
-//! struct State {
-//!     toggle: bool,
-//! }
+//!   #[derive(Copy, Clone)]
+//!   enum Event {
+//!       Event1,
+//!       Event2,
+//!   }
 //!
-//! fn action(state: &mut State) {
-//!     state.toggle = !state.toggle;
-//! }
+//!   fn action() -> bool {
+//!       true
+//!   }
 //!
-//! fn pre_action(state: State) -> State {
-//!     state
-//! }
+//!   fn state_1<'a>() -> StreamProcessor<'a, Event, bool> {
+//!       fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
+//!           match event {
+//!               Event::Event1 => StreamProcessor::put(action(), state_1),
+//!               Event::Event2 => state_2(),
+//!           }
+//!       }
 //!
-//! fn post_action(state: State) -> State {
-//!     state
-//! }
+//!       StreamProcessor::get(transition)
+//!   }
 //!
-//! fn generator_name<'a>(mut state: State) -> StreamProcessor<'a, (), bool> {
-//!     state = pre_action(state);
-//!     StreamProcessor::get(|_| {
-//!         action(&mut state);
-//!         StreamProcessor::put(state.toggle, || generator_name(post_action(state)))
-//!     })
-//! }
+//!   fn state_2<'a>() -> StreamProcessor<'a, Event, bool> {
+//!       fn transition<'a>(event: Event) -> StreamProcessor<'a, Event, bool> {
+//!           match event {
+//!               Event::Event1 => state_1(),
+//!               Event::Event2 => StreamProcessor::put(false, state_2),
+//!           }
+//!       }
 //!
-//! let generations = generator_name(State { toggle: false }).eval(InfiniteList::constant(()));
+//!       StreamProcessor::get(transition)
+//!   }
 //!
-//! assert!(generations.head());
-//! ```
+//!   let event_loop = state_2().eval(InfiniteList::constant(Event::Event1));
+//!
+//!   assert!(event_loop.head());
+//!   ```
+//!
+//!   A slightly more concrete example using that pattern is available as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/events.rs).
+//!   And a full-blown concrete example of a pelican crossing can be found [here (as .md file)](https://github.com/aronpaulson/rspl/blob/master/examples/pelican.md) and [here (as .rs file)](https://github.com/aronpaulson/rspl/blob/master/examples/hics.rs).
+//!   Notably, it uses rspl to encode effectful hierarchical state machines with a capability-passing inspired effect-handling mechanism.
+//! - demand-driven programming with generators as suggested [here](https://www.cse.chalmers.se/~rjmh/Papers/whyfp.pdf).
+//!   Abstractly, that [usage](#usage) of rspl looks as follows:
+//!
+//!   ```
+//!   use rspl::streams::infinite_lists::InfiniteList;
+//!   use rspl::streams::Stream;
+//!   use rspl::StreamProcessor;
+//!
+//!   struct State {
+//!       toggle: bool,
+//!   }
+//!
+//!   fn action(state: &mut State) {
+//!       state.toggle = !state.toggle;
+//!   }
+//!
+//!   fn pre_action(state: State) -> State {
+//!       state
+//!   }
+//!
+//!   fn post_action(state: State) -> State {
+//!       state
+//!   }
+//!
+//!   fn generator_name<'a>(mut state: State) -> StreamProcessor<'a, (), bool> {
+//!       state = pre_action(state);
+//!       StreamProcessor::get(|_| {
+//!           action(&mut state);
+//!           StreamProcessor::put(state.toggle, || generator_name(post_action(state)))
+//!       })
+//!   }
+//!
+//!   let generations = generator_name(State { toggle: false }).eval(InfiniteList::constant(()));
+//!
+//!   assert!(generations.head());
+//!   ```
+//!
+//!   A slightly more concrete example using that pattern is available as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/demands.rs).
+//!   And a full-blown concrete example of a heat index control system can be found [here (as .md file)](https://github.com/aronpaulson/rspl/blob/master/examples/hics.md) and [here (as .rs file)](https://github.com/aronpaulson/rspl/blob/master/examples/hics.rs).
 
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
