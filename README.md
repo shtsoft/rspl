@@ -11,7 +11,7 @@
 [actions-badge]: https://github.com/aronpaulson/rspl/actions/workflows/ci.yaml/badge.svg
 [actions-url]: https://github.com/aronpaulson/rspl/actions/workflows/ci.yaml
 
-An attempt to implement [Hancock et al.](https://arxiv.org/pdf/0905.4813)'s stream-processor language in rust.
+A rust stream processor language with roots in functional programming (see [Generalising Monads to Arrows](https://www.sciencedirect.com/science/article/pii/S0167642399000234)).
 
 For documumentation see [Released API docs](https://docs.rs/rspl).
 In particular, you can find a design- and usage-description there.

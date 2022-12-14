@@ -1,4 +1,4 @@
-//! rspl is a stream processor language based on [Hancock et al.](https://arxiv.org/pdf/0905.4813) using rust as meta-language.
+//! rspl is a stream processor language based on the one discussed in [Generalising Monads to Arrows](https://www.sciencedirect.com/science/article/pii/S0167642399000234) using rust as meta-language.
 //!
 //! ## Design
 //!
