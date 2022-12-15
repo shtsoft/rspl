@@ -2,12 +2,12 @@
 //!
 //! ## Design
 //!
-//! The idea of this stream processor language is to split the processing of streams into two parts:
+//! Essentially, rspl is a way to encode functions from streams to streams such that control is syntactically explicit (like in ordinary continuation-passing style) refining the orthodox functional approach to stream processing with combinators like 'map'.
+//! More precisely, the idea of this stream processor language is to split the processing of streams into two parts:
 //! One part for reading (getting) the first element of an input stream to direct the further processing.
 //! Another part for writing (putting) something to the output stream and offering to process some input stream if needed.
-//! Combining these parts in various ways allows to flexibly construct stream processors as programs comprising a generalization of the well-known map-function on lists from functional programming.
-//!
-//! The following graphic illustrates how the two different kinds of stream processors ('getting' and 'putting') work (whereas a textual description is contained in the docs of [`StreamProcessor`]):
+//! Combining these parts in various ways allows to flexibly construct stream processors as programs.
+//! The following graphic illustrates how those two different kinds of stream processors ('getting' and 'putting') work (whereas a textual description is contained in the docs of [`StreamProcessor`]):
 //!
 //! <pre>
 //! h--t1--t2--t3--...                   ha--t1--t2--t3--...
@@ -40,6 +40,12 @@
 //! ...                                      ...
 //! </pre>
 //!
+//! Remarkably, the language constructs are somewhat dual and loosely correspond to (dual) programming paradigms:
+//! - The `Get`-construct relates to event-driven programming as it reacts to input (events) eagerly.
+//! - The `Put`-construct relates to demand-driven[^1] programming as it generates output (demands) iteratively by need.
+//!
+//! This will be discussed further in the [Examples](#examples)-section.
+//!
 //! ## Usage
 //!
 //! To program a rspl-[`StreamProcessor`] you just have to compose the constructors [`StreamProcessor::Get`]/[`get`](`StreamProcessor::get`) and [`StreamProcessor::Put`]/[`put`](`StreamProcessor::put`) in the right way.
@@ -53,8 +59,8 @@
 //!
 //! # Examples
 //!
-//! Of course, rspl supports orthodox 'combination-driven' stream processing as it is known from list processing with combinators like [`compose`](`combinators::compose`), [`filter`](`combinators::filter`) and [`map`](`combinators::map`).
-//! For example, one could first filter some 'bad' elements out of a stream in order to safely iterate some function over the resulting stream afterwards.
+//! As alluded in the [Design](#design)-section, rspl supports orthodox 'combination-driven' stream processing as it is known from list processing with combinators like [`compose`](`combinators::compose`), [`filter`](`combinators::filter`) and [`map`](`combinators::map`).
+//! For example, it is possible to first filter some 'bad' elements out of a stream in order to safely iterate some function over the resulting stream afterwards in a combinatorial way.
 //! Such a [usage](#usage) of rspl looks like:
 //!
 //! ```
@@ -160,6 +166,8 @@
 //!
 //!   A slightly more concrete example using that pattern is available as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/demands.rs).
 //!   And a full-blown concrete example of a heat index control system can be found [here (as .md file)](https://github.com/aronpaulson/rspl/blob/master/examples/hics.md) and [here (as .rs file)](https://github.com/aronpaulson/rspl/blob/master/examples/hics.rs).
+//!
+//! [^1]: Look at [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf) for some more explanation on that term.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
