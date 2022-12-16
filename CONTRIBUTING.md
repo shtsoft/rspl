@@ -28,14 +28,14 @@ Both integration- and unit-tests.
 It is also suggested to include one documentation-test for each public API function.
 In the end, make sure that all tests work as expected by running `cargo test`.
 
-## Github
+## GitHub
 
-This project is hosted on Github.
-In the folllowing it is briefly described how this project intends to leverage Github for development.
+This project is hosted on GitHub.
+In the folllowing it is briefly described how this project intends to leverage GitHub for development.
 
 ### Issues
 
-Github Issues is how contributors shall communicate.
+GitHub Issues is how contributors shall communicate.
 Issue-templates are provided to type communication a bit.
 But in doubt, feel free to use blank issues.
 
@@ -58,13 +58,13 @@ In a nutshell, what they do is
 
 As usual, if you can not directly push to the repository use pull requests for contributions.
 A pull request-template is provided to assist you.
-Otherwise try to keep pull request small and focused (like a topic-branch - see [Git](#git)).
+Otherwise try to keep pull requests small and focused (like a topic-branch - see [Git](#git)).
 In any case, take all the other sections into account to ease the pain of merging your pull request.
 
 ## Git
 
 This project uses git for version control and contributors are kindly asked to use git as described in the [git-book](https://git-scm.com/book/en/v2).
-In the following the most important aspects are recounted and few things are nailed down.
+In the following the most important aspects are recounted and a few things are nailed down.
 
 ### Commits
 
@@ -96,4 +96,4 @@ This project uses [Semantic Versioning](https://semver.org) - read that if you d
 When `development` is in a state such that [Semantic Versioning](https://semver.org) requires a version-action then edit the `version`-field of [Cargo.toml](Cargo.toml) accordingly and make a commit with message 'Release version X.Y.Z'.
 Check if publishing would work with `cargo publish --dry-run`.
 Afterwards tag the commit (`git tag vX.Y.Z -m 'Release version X.Y.Z'`) and merge development back into master.
-Finally, make a release on Github and publish on crates.io.
+Finally, make a release on GitHub and publish on crates.io.
