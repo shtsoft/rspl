@@ -40,7 +40,7 @@ pub fn alternate<'a, A, B: 'a>(
     }
 }
 
-/// The function combines a stream processor and a family of them into one processing with the given one until an element would be written using that element to choose a stream processor from the family to carry on processing instead of writing it to the output stream.
+/// The function combines a stream processor and a family of them into one processing with the given one until an element would be written. It then uses that element to choose a stream processor from the family to carry on processing instead of writing it to the output stream.
 /// - `sp` is the stream processor.
 /// - `f` is the family of stream processors.
 ///
