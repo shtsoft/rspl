@@ -59,7 +59,7 @@
 //!
 //! # Examples
 //!
-//! As alluded to in the [Design](#design)-section, rspl supports orthodox 'combinatior-driven' stream processing as it is known from list processing with combinators like [`compose`](`combinators::compose`), [`filter`](`combinators::filter`) and [`map`](`combinators::map`).
+//! As alluded to in the [Design](#design)-section, rspl supports orthodox 'combinator-driven' stream processing as it is known from list processing with combinators like [`compose`](`combinators::compose`), [`filter`](`combinators::filter`) and [`map`](`combinators::map`).
 //! For example, it is possible to first filter some 'bad' elements out of a stream in order to safely iterate some function over the resulting stream afterwards in a combinatorial way.
 //! Such a [usage](#usage) of rspl looks like:
 //!

@@ -16,7 +16,7 @@ A **powerful** stream processor language with roots in functional programming (s
 - power:
   * syntactically explicit process control
   * arbitrary mixing of reactive (event-driven) and generative (demand-driven) processing
-  * high-level stream processor combinators (combinatior-driven)
+  * high-level stream processor combinators (combinator-driven)
   * agnostic regarding input-stream implementation
 - design patterns (also see [Released API docs](https://docs.rs/rspl)):
   * [type-state pattern for event-driven programming](https://github.com/aronpaulson/rspl/blob/master/examples/pelican.md)

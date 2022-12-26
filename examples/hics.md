@@ -5,11 +5,11 @@ More precisely, the example implements a system to keep the heat index (a quanti
 The system specification is that the heat index has to be brought down periodically to a certain value within a window of tolerance depending on the daytime by first trying to dehumidify the room and if that does not suffice to also cool down the room.
 Furthermore, a thermohygrometer and a clock shall be accessible for an implementation.\
 The hics-implementation presented in this example measures temeprature and humidity as well as the time to decide if it has to take action.
-And if it actuates something it waits for it to take effect in order to decide whether to repeat or to go idle for a period.
+And if it actuates something, it waits for it to take effect in order to decide whether to repeat or to go idle for a period.
 Moreover it follows the structuring-suggestions from [Why Functional Programming Matters](https://www.cse.chalmers.se/~rjmh/Papers/whyfp.pdf).
-There they describe how the use of higher-order functions and lazy evaluation can greatly improves the modularity of programs.
-They illustrate that by modularizing on demand computations of perhaps infinite objects like real numbers and game trees exploiting that in languages with first-class functions and lazy evaluation everything is a generator in some sense.
-As the hics described above shares that 'on demand computation'-aspect - most notably, it measures (that is, reads out the thermohygrometer) on demand - these modularization techniques will apply in that case, too.
+There they describe how the use of higher-order functions and lazy evaluation can greatly improve the modularity of programs.
+They illustrate that point by modularizing on-demand computations of perhaps infinite objects like real numbers and game trees, exploiting that in languages with first-class functions and lazy evaluation everything is a generator in some sense.
+As the hics described above shares that 'on-demand computation' aspect - most notably, it measures (that is, reads out the thermohygrometer) on demand - these modularization techniques will apply in that case, too.
 Adapting the techniques to rspl and rust yields a modular implementation of the addressed hics in rust.
 
 The intention of the example is to demonstrate rspl's applicability in demand-driven[^1] programming (with generators, of course).
