@@ -14,7 +14,7 @@ use alloc::boxed::Box;
 ///
 /// # Examples
 ///
-/// Negate a stream of bools in any other position:
+/// Negate a stream of bools in every other position:
 ///
 /// ```
 /// use rspl::combinators::{alternate, map};

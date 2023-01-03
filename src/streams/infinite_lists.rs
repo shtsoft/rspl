@@ -7,7 +7,7 @@ use alloc::boxed::Box;
 /// [`Lazy<T>`] types thunks of type `T`.
 type Lazy<'a, T> = dyn FnOnce() -> T + 'a;
 
-/// [`InfiniteList<X>`] defines non-well-founded list of type `X`.
+/// [`InfiniteList<X>`] defines non-well-founded lists of type `X`.
 pub enum InfiniteList<'a, X: 'a> {
     /// Constructing a new infinite list by prepending a new entry to an existing (lazy) infinite list.
     Cons(X, Box<Lazy<'a, InfiniteList<'a, X>>>),
@@ -44,7 +44,7 @@ impl<'a, X> InfiniteList<'a, X> {
 }
 
 impl<'a, X> Stream<X> for InfiniteList<'a, X> {
-    /// Make the first list enrty of `self` the head.
+    /// Make the first list entry of `self` the head.
     fn head(&self) -> &X {
         match self {
             Self::Cons(head, _) => head,

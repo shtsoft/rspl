@@ -1,4 +1,4 @@
-//! This module defines streams of some type extensionally by means of a trait.
+//! This module defines streams of some type intensionally by means of a trait.
 //! Additionally, the module declares submodules with implementations of the trait.
 
 pub mod infinite_lists;

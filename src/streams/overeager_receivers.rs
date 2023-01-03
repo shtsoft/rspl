@@ -1,5 +1,5 @@
 //! This module provides an implementation of streams as overeager receivers of messages.
-//! Here 'overeager' means that always one message is received in advance.
+//! Here 'overeager' means that one message is always received in advance.
 
 use super::Stream;
 
@@ -17,7 +17,7 @@ pub struct OvereagerReceiver<X> {
 impl<X> OvereagerReceiver<X> {
     /// Create a channel with an overeager receiver instead of a normal one.
     /// - `cap` is the number of messages the channel can hold where `0` means it can hold any number of messages.
-    /// - `message` is an initial placeholder for what the overeagerly receiver overeagerly receives.
+    /// - `message` is an initial placeholder for what the overeager receiver overeagerly receives.
     ///
     /// # Examples
     ///

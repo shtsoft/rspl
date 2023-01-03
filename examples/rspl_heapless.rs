@@ -5,10 +5,10 @@
 //&In the rest of this file we explain and implement that heapless approach to draw a tentative conclusion on its viability.
 
 //&rspl uses the heap essentially for laziness when it thunks stream processing and tails of streams.
-//&This is because in those cases rust does not statically determine the size of the thunks.
-//&Assisting rust in that regard by converting those closures eliminates the need for a heap.\
+//&This is because in those cases Rust does not statically determine the size of the thunks.
+//&Assisting Rust in that regard by converting those closures eliminates the need for a heap.\
 //&What we mean by converting closures here can be understood by looking at the example of streams as codata[^1].
-//&In Agda one defines streams of type `X` (extensionally) by the codata type
+//&In Agda one defines streams of type `X` (intensionally) by the codata type
 //&```agda
 //&record StreamX : Set where
 //&  coinductive
@@ -24,7 +24,7 @@
 //&head (constant x) = x
 //&tail (constant x) = constant x
 //&```
-//&Now, to encode `constant` in rust one can convert that generalized closure by making its environment (its domain) explicit by means of a struct (as usual) and implement the `Stream<X>`-trait accordingly:
+//&Now, to encode `constant` in Rust one can convert that generalized closure by making its environment (its domain) explicit by means of a struct (as usual), and implement the `Stream<X>`-trait accordingly:
 
 //&```rust
 trait Stream<X> {
@@ -48,7 +48,7 @@ impl<X> Stream<X> for ComatchConstant<X> {
 //&```
 
 //&This also works in greater generality for mutually recursive codata.
-//&For ordniary stream processors in Agda
+//&For ordinary stream processors in Agda
 //&```agda
 //&data StreamProcessor : Set where
 //&  get : (A -> StreamProcessor) -> StreamProcessor
@@ -59,7 +59,7 @@ impl<X> Stream<X> for ComatchConstant<X> {
 //&  field
 //&    force : StreamProcessor
 //&```
-//&we get the following rspl equivalent (if we also generalize `X -> Y` to the extensional definition of function with the help of codata) in rust:
+//&we get the following rspl equivalent (if we also generalize `X -> Y` to the intensional definition of function with the help of codata) in Rust:
 
 //&```rust
 enum StreamProcessor<A, B, F, L>
@@ -216,8 +216,8 @@ fn main() {
 }
 //&```
 
-//&The tentative conclusion is that while the approach seems doable it has significant negative consequences: stream processors become harder to understand and more tedious to write.
-//&Therefore the approach is impractical.
+//&The tentative conclusion is that while the approach seems doable, it has significant negative consequences: stream processors become harder to understand and more tedious to write.
+//&Therefore, the approach is impractical.
 //&At least, without a better language frontend.
 
 //&[^1]: A modern take on OOP generalizing closures (see e.g. [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf)).
