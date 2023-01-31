@@ -19,7 +19,6 @@
 //&On the one hand, stream processors are able to output something and hence allow to even encode Mealy machines.
 //&On the other hand, stream processors can have side effects expanding the domain by effectful machines.\
 //&Now, while it is nice to be able to encode effectful (Mealy) machines instead of only ordinary finite state machines, having the effect implementations baked into the machine can be unfavorable for reasons of modularity and control.[^1]
-//&
 //&To mitigate those problems, a possible approach is to reflect all possible effects into the stream processor's output type.
 //&Then, the effects become a stream of capabilities the machine requires the operator to provide in order to make progress.
 //&This improves modularity since the machine logic is seperated from its side effects.
