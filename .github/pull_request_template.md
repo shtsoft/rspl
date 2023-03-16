@@ -1,5 +1,5 @@
 <!--
-Your pull request is greatly appreciated but please consult https://github.com/aronpaulson/rspl/blob/master/CONTRIBUTING.md before making one.
+Your pull request is greatly appreciated but please consult https://github.com/shtsoft/rspl/blob/master/CONTRIBUTING.md before making one.
 -->
 
 ## What
