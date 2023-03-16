@@ -124,8 +124,8 @@
 //!   assert!(event_loop.head());
 //!   ```
 //!
-//!   A slightly more concrete example using that pattern is available as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/events.rs).
-//!   And a full-blown concrete example of a pelican crossing can be found [here (as .md file)](https://github.com/aronpaulson/rspl/blob/master/examples/pelican.md) and [here (as .rs file)](https://github.com/aronpaulson/rspl/blob/master/examples/pelican.rs).
+//!   A slightly more concrete example using that pattern is available as [integration test](https://github.com/shtsoft/rspl/blob/master/tests/events.rs).
+//!   And a full-blown concrete example of a pelican crossing can be found [here (as .md file)](https://github.com/shtsoft/rspl/blob/master/examples/pelican.md) and [here (as .rs file)](https://github.com/shtsoft/rspl/blob/master/examples/pelican.rs).
 //!   Notably, it uses rspl to encode effectful hierarchical state machines with a capability-passing inspired effect-handling mechanism.
 //! - demand-driven programming with generators as suggested [here](https://www.cse.chalmers.se/~rjmh/Papers/whyfp.pdf).
 //!   Abstractly, that [usage](#usage) of rspl looks as follows:
@@ -164,8 +164,8 @@
 //!   assert!(generations.head());
 //!   ```
 //!
-//!   A slightly more concrete example using that pattern is available as [integration test](https://github.com/aronpaulson/rspl/blob/master/tests/demands.rs).
-//!   And a full-blown concrete example of a heat index control system can be found [here (as .md file)](https://github.com/aronpaulson/rspl/blob/master/examples/hics.md) and [here (as .rs file)](https://github.com/aronpaulson/rspl/blob/master/examples/hics.rs).
+//!   A slightly more concrete example using that pattern is available as [integration test](https://github.com/shtsoft/rspl/blob/master/tests/demands.rs).
+//!   And a full-blown concrete example of a heat index control system can be found [here (as .md file)](https://github.com/shtsoft/rspl/blob/master/examples/hics.md) and [here (as .rs file)](https://github.com/shtsoft/rspl/blob/master/examples/hics.rs).
 //!
 //! [^1]: Look at [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf) for some more explanation on that term.
 

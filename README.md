@@ -8,8 +8,8 @@
 [crates-url]: https://crates.io/crates/rspl
 [license-badge]: https://img.shields.io/badge/license-GPL-blue.svg
 [license-url]: ./Cargo.toml
-[actions-badge]: https://github.com/aronpaulson/rspl/actions/workflows/ci.yaml/badge.svg
-[actions-url]: https://github.com/aronpaulson/rspl/actions/workflows/ci.yaml
+[actions-badge]: https://github.com/shtsoft/rspl/actions/workflows/ci.yaml/badge.svg
+[actions-url]: https://github.com/shtsoft/rspl/actions/workflows/ci.yaml
 
 A **powerful** stream processor language with roots in functional programming (see [Generalising Monads to Arrows](https://www.sciencedirect.com/science/article/pii/S0167642399000234)) embedded in **Rust** and supplemented with adaptations of appreciated **design patterns**.
 
@@ -19,8 +19,8 @@ A **powerful** stream processor language with roots in functional programming (s
   * high-level stream processor combinators (combinator-driven)
   * agnostic regarding input-stream implementation
 - design patterns (also see [Released API docs](https://docs.rs/rspl)):
-  * [type-state pattern for event-driven programming](https://github.com/aronpaulson/rspl/blob/master/examples/pelican.md)
-  * [state-passing pattern for demand-driven programming](https://github.com/aronpaulson/rspl/blob/master/examples/hics.md)
+  * [type-state pattern for event-driven programming](https://github.com/shtsoft/rspl/blob/master/examples/pelican.md)
+  * [state-passing pattern for demand-driven programming](https://github.com/shtsoft/rspl/blob/master/examples/hics.md)
 - Rust:
   * safety:
     + no dependencies (apart from crossbeam-option)
@@ -60,7 +60,7 @@ There remain some important things to do:
 - rspl aims to support its use in embedded rust.
   As of yet, while the standard library is not strictly, needed an allocator is.
   But we have two approaches in mind to get rid of the necessity of a heap:
-    * We could try to reimplement rspl following the low-level approach discussed in [here (as .md file)](https://github.com/aronpaulson/rspl/blob/master/examples/rspl_heapless.md) and [here (as .rs file)](https://github.com/aronpaulson/rspl/blob/master/examples/rspl_heapless.rs).
+    * We could try to reimplement rspl following the low-level approach discussed in [here (as .md file)](https://github.com/shtsoft/rspl/blob/master/examples/rspl_heapless.md) and [here (as .rs file)](https://github.com/shtsoft/rspl/blob/master/examples/rspl_heapless.rs).
     * rspl uses the allocator only for some `Box`es and it is conceivable to store those boxes on 'mini-heaps' residing in stack frames (compare [smallbox](https://github.com/andylokandy/smallbox)).
       However, this approach needs further realizabilty analyses first.
 - You cannot have enough combinators.
