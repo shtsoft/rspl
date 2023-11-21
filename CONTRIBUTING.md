@@ -64,7 +64,7 @@ In any case, take all the other sections into account to ease the pain of mergin
 ## Git
 
 This project uses git for version control and contributors are kindly asked to use git as described in the [git-book](https://git-scm.com/book/en/v2).
-In the following the most important aspects are recounted and a few things are nailed down.
+In the following, the most important aspects are recounted and a few things are nailed down.
 
 ### Commits
 
