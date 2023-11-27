@@ -17,8 +17,18 @@ Specifically,
 
 ### Documentation
 
-Document everything adhering to the current style.
-In particular, comment private functions.
+Document items (regardless of visibility) descending from the library-crate adhering to the current style.
+For enums and traits this means to write a description of what they define (extensionally and intensionally, respectively) while for structs it means to say what they structure.
+For function-like items this means to write a 'contract' made up by:
+1. a description of what the item does
+2. a description of the arguments (if there are any)
+3. a description of the side effects (if there are any)
+4. a description of the preconditions, postconditions and invariants (if there are any)
+5. additional information interesting to callers (if there is some)
+Furthermore, it means
+- for constructors to say what they construct
+- for structs to say what their fields mean
+but only if it really makes sense to do so.
 In the end, make sure that the docs build by running `cargo doc --no-deps --document-private-items`.
 
 ### Testing
