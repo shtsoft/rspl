@@ -181,25 +181,25 @@ use streams::Stream;
 
 use alloc::boxed::Box;
 
-/// [`Lazy<T>`] types thunks of type `T`.
+/// A type of thunks of type `T`.
 type Lazy<'a, T> = dyn FnOnce() -> T + 'a;
 
-/// [`StreamProcessor<A, B>`] defines (the syntax of) a language describing the domain of stream processors, that is, terms which can be interpreted to turn streams of type `A` into streams of type `B`.
+/// Terms of a language describing the domain of stream processors, that is, terms which can be interpreted to turn streams of type `A` into streams of type `B`.
 pub enum StreamProcessor<'a, A: 'a, B> {
-    /// This stream processor first reads the `A` from the head of the input stream and subsequently applies its function argument to that element yielding a stream processor.
+    /// A stream processor which first reads the `A` from the head of the input stream and subsequently applies its function argument to that element yielding a stream processor.
     /// The resulting stream processor is then used to process the input stream further depending on its shape: if it is a
     /// - [`Get`](`StreamProcessor::Get`), it is applied to the tail of the input stream.
     /// - [`Put`](`StreamProcessor::Put`), it is applied to the whole input stream.
     Get(Box<dyn FnOnce(A) -> StreamProcessor<'a, A, B> + 'a>),
-    /// This stream processor writes the `B` from its first argument to the output list.
-    /// Then, to construct the rest of the output list, it uses its second argument to process the input stream depending on its shape: if it is a
+    /// A stream processor which writes the `B` from its first argument to the output stream.
+    /// Then, to construct the rest of the output stream, it uses its second argument to process the input stream depending on its shape: if it is a
     /// - [`Get`](`StreamProcessor::Get`), it is applied to the tail of the input stream.
     /// - [`Put`](`StreamProcessor::Put`), it is applied to the whole input stream.
     Put(B, Box<Lazy<'a, StreamProcessor<'a, A, B>>>),
 }
 
 impl<'a, A, B> StreamProcessor<'a, A, B> {
-    /// The same as [`StreamProcessor::Get`] but with boxing of `f` hidden to make the resulting code less verbose.
+    /// Hides the boxing of `f` in [`StreamProcessor::Get`] to make the resulting code less verbose.
     #[inline]
     pub fn get<F>(f: F) -> Self
     where
@@ -208,7 +208,7 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
         StreamProcessor::Get(Box::new(f))
     }
 
-    /// The same as [`StreamProcessor::Put`] but with boxing of `lazy_sp` hidden to make the resulting code less verbose.
+    /// Hides the boxing of `lazy_sp` in [`StreamProcessor::Put`] to make the resulting code less verbose.
     #[inline]
     pub fn put<T>(b: B, lazy_sp: T) -> Self
     where
@@ -220,16 +220,18 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
 }
 
 impl<'a, A, B> StreamProcessor<'a, A, B> {
-    /// Evaluate `self` on an input stream essentially implementing a semantic of [`StreamProcessor<A, B>`].
+    /// Evaluates `self` on an input stream essentially implementing a semantic of [`StreamProcessor<A, B>`].
     /// - `stream` is the input stream.
-    ///
-    /// Note that the function can block the current thread if the respective implementation of [`Stream::tail`] can.
     ///
     /// # Panics
     ///
     /// A panic may occur if
     /// - the stream processor contains Rust-terms which can panic.
-    /// - the respective implementation of [`Stream::head`] or [`Stream::tail`] can panic.
+    /// - the respective implementation of [`Stream`] can panic.
+    ///
+    /// # Notes
+    ///
+    /// The function can block the current thread if the respective implementation of [`Stream`] can.
     ///
     /// # Examples
     ///

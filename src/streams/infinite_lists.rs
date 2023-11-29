@@ -4,17 +4,17 @@ use super::Stream;
 
 use alloc::boxed::Box;
 
-/// [`Lazy<T>`] types thunks of type `T`.
+/// A type of thunks of type `T`.
 type Lazy<'a, T> = dyn FnOnce() -> T + 'a;
 
-/// [`InfiniteList<X>`] defines non-well-founded lists of type `X`.
+/// Non-well-founded lists of type `X`.
 pub enum InfiniteList<'a, X: 'a> {
-    /// Constructing a new infinite list by prepending a new entry to an existing (lazy) infinite list.
+    /// An infinite list constructed by prepending a new entry to an existing (lazy) infinite list.
     Cons(X, Box<Lazy<'a, InfiniteList<'a, X>>>),
 }
 
 impl<'a, X> InfiniteList<'a, X> {
-    /// The same as [`InfiniteList::Cons`] but with boxing of `lazy_inflist` hidden to make the resulting code less verbose.
+    /// Hides the boxing of `lazy_inflist` in [`InfiniteList::Cons`] to make the resulting code less verbose.
     #[inline]
     pub fn cons<T>(x: X, lazy_inflist: T) -> Self
     where
@@ -25,7 +25,7 @@ impl<'a, X> InfiniteList<'a, X> {
 }
 
 impl<'a, X> InfiniteList<'a, X> {
-    /// Create an infinte list of a certain constant.
+    /// Creates an infinte list of a certain constant.
     /// - `x` is the constant.
     ///
     /// # Examples
@@ -44,14 +44,12 @@ impl<'a, X> InfiniteList<'a, X> {
 }
 
 impl<'a, X> Stream<X> for InfiniteList<'a, X> {
-    /// Make the first list entry of `self` the head.
     fn head(&self) -> &X {
         match self {
             Self::Cons(head, _) => head,
         }
     }
 
-    /// Make all but the first list entry of `self` the tail.
     fn tail(self) -> Self {
         match self {
             Self::Cons(_, tail) => tail(),

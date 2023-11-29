@@ -6,16 +6,14 @@ use super::Stream;
 use crossbeam::channel::{bounded, unbounded};
 use crossbeam::channel::{Receiver, Sender};
 
-/// [`OvereagerReceiver<X>`] abstracts receivers of messages of type `X` which always buffer one message.
+/// Abstracts receivers of messages of type `X` which always buffer one message.
 pub struct OvereagerReceiver<X> {
-    /// overeagerly received message
     message: X,
-    /// receiver of messages
     receiver: Receiver<X>,
 }
 
 impl<X> OvereagerReceiver<X> {
-    /// Create a channel with an overeager receiver instead of a normal one.
+    /// Creates a channel with an overeager receiver instead of a normal one.
     /// - `cap` is the number of messages the channel can hold where `0` means it can hold any number of messages.
     /// - `message` is an initial placeholder for what the overeager receiver overeagerly receives.
     ///
@@ -32,17 +30,12 @@ impl<X> OvereagerReceiver<X> {
     }
 }
 
+/// Note that when taking the tail this implementation can block the current thread and panic depending on the sender status ('nothing sent yet' and 'is disconnected', respectively).
 impl<X> Stream<X> for OvereagerReceiver<X> {
-    /// Make the message buffer of `self` the head.
     fn head(&self) -> &X {
         &self.message
     }
 
-    /// Blocks the current thread until it can make `self` with an updated message buffer the tail.
-    ///
-    /// # Panics
-    ///
-    /// A panic is caused if the channel becomes disconnected.
     fn tail(mut self) -> Self {
         self.message = self.receiver.recv().unwrap();
         self
