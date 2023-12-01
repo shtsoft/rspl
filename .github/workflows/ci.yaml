@@ -48,7 +48,7 @@ jobs:
           targets: ${{ matrix.target }}
       - uses: taiki-e/setup-cross-toolchain-action@v1
         with:
-          targets: ${{ matrix.target }}
+          target: ${{ matrix.target }}
       - run: cargo test --target ${{ matrix.target }}
 
   san-test:
