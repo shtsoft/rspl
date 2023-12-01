@@ -25,15 +25,11 @@ jobs:
           - nightly
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ matrix.rust }}
-          override: true
-          profile: minimal
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
+      - run: cargo test
 
   cross-test:
     name: cross-test
@@ -45,30 +41,25 @@ jobs:
           - arm-unknown-linux-gnueabihf
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          override: true
-          profile: minimal
-          target: ${{ matrix.target }}
-      - uses: actions-rs/cargo@v1
+          targets: ${{ matrix.target }}
+      - uses: taiki-e/setup-cross-toolchain-action@v1
         with:
-          use-cross: true
-          command: test
-          args: --target ${{ matrix.target }}
+          targets: ${{ matrix.target }}
+      - run: cargo test --target ${{ matrix.target }}
 
   san-test:
     name: san-test
     needs: fmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: nightly
-          override: true
-          profile: minimal
       - run: cargo test --target x86_64-unknown-linux-gnu
         env:
           RUSTFLAGS: -Z sanitizer=address
@@ -78,45 +69,30 @@ jobs:
     name: fmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          override: true
-          profile: minimal
           components: rustfmt
-      - uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+      - run: cargo fmt --all -- --check
 
   clippy:
     name: clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          override: true
-          profile: minimal
           components: clippy
-      - uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all --benches --examples --tests --all-features
+      - run: cargo clippy --all --benches --examples --tests --all-features
 
   docs:
     name: docs
     runs-on:  ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
-          override: true
-          profile: minimal
-      - uses: actions-rs/cargo@v1
-        with:
-          command: doc
-          args: --no-deps --document-private-items
+      - run: cargo doc --no-deps --document-private-items
