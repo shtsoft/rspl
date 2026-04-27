@@ -139,7 +139,6 @@ where
                         stream = stream.tail();
                         self = f.apply(stream.head().clone());
                     }
-                    continue;
                 }
                 StreamProcessor::Put(b, lazy_sp) => {
                     return ComatchEval {

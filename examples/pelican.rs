@@ -331,7 +331,7 @@ where
                 break;
             }
             Capability::Break => break,
-        };
+        }
         capabilities = capabilities.tail();
     }
 }

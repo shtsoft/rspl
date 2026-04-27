@@ -15,6 +15,7 @@ pub trait Stream<X> {
     /// # Panics
     ///
     /// Implementations may choose to panic.
+    #[must_use]
     fn tail(self) -> Self;
 }
 

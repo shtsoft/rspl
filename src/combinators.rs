@@ -41,7 +41,8 @@ pub fn alternate<'a, A, B: 'a>(
     }
 }
 
-/// Combines a stream processor and a family of them into one, processing with the given one until an element is written. It then uses that element to choose a stream processor from the family to carry on processing instead of writing it to the output stream.
+/// Combines a stream processor and a family of them into one, processing with the given one until an element is written.
+/// It then uses that element to choose a stream processor from the family to carry on processing instead of writing it to the output stream.
 /// - `sp` is the stream processor.
 /// - `f` is the family of stream processors.
 ///
@@ -112,7 +113,6 @@ pub fn compose<'a, A, B, C: 'a>(
                 StreamProcessor::Get(f) => {
                     sp1 = lazy_sp1();
                     sp2 = f(b);
-                    continue;
                 }
                 StreamProcessor::Put(c, lazy_sp2) => {
                     return StreamProcessor::Put(

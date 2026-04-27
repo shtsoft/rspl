@@ -268,7 +268,6 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
                         stream = stream.tail();
                         self = f(stream.head().clone());
                     }
-                    continue;
                 }
                 StreamProcessor::Put(b, lazy_sp) => {
                     return InfiniteList::Cons(
@@ -305,7 +304,7 @@ mod tests {
     #[test]
     fn test_get() {
         assert!(matches!(
-            StreamProcessor::get(|_: ()| { map(id) }),
+            StreamProcessor::get(|()| { map(id) }),
             StreamProcessor::Get(_)
         ));
     }
@@ -314,7 +313,7 @@ mod tests {
     fn test_put() {
         assert!(matches!(
             StreamProcessor::put((), || map(id)),
-            StreamProcessor::Put(_, _)
+            StreamProcessor::Put((), _)
         ));
     }
 

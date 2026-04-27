@@ -24,7 +24,7 @@ impl<'a, X> InfiniteList<'a, X> {
     }
 }
 
-impl<'a, X> InfiniteList<'a, X> {
+impl<X> InfiniteList<'_, X> {
     /// Creates an infinite list of a specific constant.
     /// - `x` is the constant.
     ///
@@ -43,7 +43,7 @@ impl<'a, X> InfiniteList<'a, X> {
     }
 }
 
-impl<'a, X> Stream<X> for InfiniteList<'a, X> {
+impl<X> Stream<X> for InfiniteList<'_, X> {
     fn head(&self) -> &X {
         match self {
             Self::Cons(head, _) => head,
@@ -68,7 +68,7 @@ mod tests {
     fn test_cons() {
         assert!(matches!(
             InfiniteList::cons((), || InfiniteList::constant(())),
-            InfiniteList::Cons(_, _)
+            InfiniteList::Cons((), _)
         ));
     }
 
