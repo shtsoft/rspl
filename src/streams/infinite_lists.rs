@@ -1,10 +1,10 @@
-//! This module provides the standard implementation of streams as infinite lists (the greatest fixpoint of `cons`ing).
+//! This module provides the standard implementation of streams as infinite lists (the greatest fixed point of `cons`ing).
 
 use super::Stream;
 
 use alloc::boxed::Box;
 
-/// A type of thunks of type `T`.
+/// A type representing thunks of type `T`.
 type Lazy<'a, T> = dyn FnOnce() -> T + 'a;
 
 /// Non-well-founded lists of type `X`.
@@ -25,12 +25,12 @@ impl<'a, X> InfiniteList<'a, X> {
 }
 
 impl<'a, X> InfiniteList<'a, X> {
-    /// Creates an infinte list of a certain constant.
+    /// Creates an infinite list of a specific constant.
     /// - `x` is the constant.
     ///
     /// # Examples
     ///
-    /// Creating an infinite list of `true`s:
+    /// Creating an infinite list of `true` values:
     ///
     /// ```
     /// let trues = rspl::streams::infinite_lists::InfiniteList::constant(true);

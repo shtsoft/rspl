@@ -6,11 +6,11 @@ pub mod infinite_lists;
 #[cfg(feature = "std")]
 pub mod overeager_receivers;
 
-/// A characterization of streams of some type `X`: a stream of `X` is an object from which one can observe something of type `X` (the head of the stream) or another stream of `X` (the tail of the stream).
+/// A characterization of streams of some type `X`: a stream of `X` is an object from which one can observe an item of type `X` (the head of the stream) or another stream of `X` (the tail of the stream).
 pub trait Stream<X> {
     /// Returns a reference to the first item of `self`.
     fn head(&self) -> &X;
-    /// Throws away the first item of `self` and returns what is left.
+    /// Discards the first item of `self` and returns the remainder of the stream.
     ///
     /// # Panics
     ///
@@ -18,18 +18,18 @@ pub trait Stream<X> {
     fn tail(self) -> Self;
 }
 
-/// Prints a specified number of elements from some provided stream returning the not printed part.
+/// Prints a specified number of elements from the provided stream and returns the remaining part.
 /// - `stream` is the stream to be printed.
 /// - `n` is the number of elements to be printed.
 ///
 /// # Panics
 ///
-/// A panic is caused if the respective implementation of [`Stream`] panics.
+/// Panics if the respective implementation of [`Stream`] panics.
 ///
 /// # Notes
 ///
-/// Note that the function can block the current thread if the respective implementation of [`Stream`] can.
-/// However, if it does not, then you might find it slow as it uses `println!` in a loop.
+/// Note that this function can block the current thread if the implementation of [`Stream`] does.
+/// Even if it does not block, it may be slow as it uses `println!` in a loop.
 ///
 /// # Examples
 ///

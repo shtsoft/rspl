@@ -1,25 +1,25 @@
-//! This module provides an implementation of streams as overeager receivers of messages.
-//! Here 'overeager' means that one message is always received in advance.
+//! This module provides an implementation of streams as overeager message receivers.
+//! Here, 'overeager' means that one message is always received in advance.
 
 use super::Stream;
 
 use crossbeam::channel::{bounded, unbounded};
 use crossbeam::channel::{Receiver, Sender};
 
-/// Abstracts receivers of messages of type `X` which always buffer one message.
+/// Abstracts receivers of messages of type `X` that always buffer one message.
 pub struct OvereagerReceiver<X> {
     message: X,
     receiver: Receiver<X>,
 }
 
 impl<X> OvereagerReceiver<X> {
-    /// Creates a channel with an overeager receiver instead of a normal one.
-    /// - `cap` is the number of messages the channel can hold where `0` means it can hold any number of messages.
-    /// - `message` is an initial placeholder for what the overeager receiver overeagerly receives.
+    /// Creates a channel with an overeager receiver.
+    /// - `cap` is the capacity of the channel; `0` indicates an unbounded channel.
+    /// - `message` is the initial placeholder that the overeager receiver holds in advance.
     ///
     /// # Examples
     ///
-    /// Creating a stream with head `true` and tail whatever is passed by `tx`:
+    /// Creating a stream with the head `true` and a tail determined by `tx`:
     ///
     /// ```
     /// let (tx, stream) = rspl::streams::overeager_receivers::OvereagerReceiver::channel(0, true);
@@ -30,7 +30,7 @@ impl<X> OvereagerReceiver<X> {
     }
 }
 
-/// Note that when taking the tail this implementation can block the current thread and panic depending on the sender status ('nothing sent yet' and 'is disconnected', respectively).
+/// Note that when calling `tail`, this implementation may block the current thread if no message has been sent yet, or panic if the sender has been disconnected.
 impl<X> Stream<X> for OvereagerReceiver<X> {
     fn head(&self) -> &X {
         &self.message

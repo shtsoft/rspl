@@ -1,17 +1,17 @@
 //! This module defines functions which combine existing stream processors into new ones.
-//! In particular, there are nullary combinators to get writing a stream processor off the ground.
+//! In particular, there are nullary combinators to get a stream processor off the ground.
 
 use super::StreamProcessor;
 
 use alloc::boxed::Box;
 
-/// Combines two stream processors into one alternating between the two whenever something is written to the ouput stream.
-/// - `sp1` is the stream processor which is in control.
+/// Combines two stream processors into one, alternating between the two whenever something is written to the output stream.
+/// - `sp1` is the stream processor initially in control.
 /// - `sp2` is the stream processor to which control is transferred.
 ///
 /// # Notes
 ///
-/// This function is in analogy to running coroutines as it runs its arguments concurrently on the input stream.
+/// This function is analogous to running coroutines, as it runs its arguments concurrently on the input stream.
 ///
 /// # Examples
 ///
@@ -41,13 +41,13 @@ pub fn alternate<'a, A, B: 'a>(
     }
 }
 
-/// Combines a stream processor and a family of them into one processing with the given one until an element would be written. It then uses that element to choose a stream processor from the family to carry on processing instead of writing it to the output stream.
+/// Combines a stream processor and a family of them into one, processing with the given one until an element is written. It then uses that element to choose a stream processor from the family to carry on processing instead of writing it to the output stream.
 /// - `sp` is the stream processor.
 /// - `f` is the family of stream processors.
 ///
 /// # Notes
 ///
-/// This function is in analogy to the bind operation of monads (though we do **not** claim that it is the bind operation of an actual monad `StreamProcessor<X, _>`).
+/// This function is analogous to the bind operation of monads (though we do **not** claim that it is the bind operation of an actual monad `StreamProcessor<X, _>`).
 ///
 /// # Examples
 ///
@@ -75,13 +75,13 @@ where
     }
 }
 
-/// Combines two stream processors into one applying the second to the result of the first.
+/// Combines two stream processors into one, applying the second to the result of the first.
 /// - `sp1` is the stream processor applied first.
 /// - `sp2` is the stream processor applied second.
 ///
 /// # Notes
 ///
-/// This function is in analogy to ordinary function composition.
+/// This function is analogous to ordinary function composition.
 /// More generally, it is the composition operation in a category with stream processors as morphisms.
 ///
 /// # Examples
@@ -125,12 +125,12 @@ pub fn compose<'a, A, B, C: 'a>(
     }
 }
 
-/// Constructs the stream processor which filters the input stream according to a given predicate.
-/// - `p` is the predicate serving as filter.
+/// Constructs a stream processor that filters the input stream according to a given predicate.
+/// - `p` is the predicate serving as the filter.
 ///
 /// # Notes
 ///
-/// The function is in analogy to the filter-function on lists which is well-known in functional programming.
+/// This function is analogous to the filter function on lists, which is well-known in functional programming.
 ///
 /// # Examples
 ///
@@ -160,13 +160,13 @@ where
     }))
 }
 
-/// Constructs the stream processor which produces an output without reading from the input according to a function remembering its state.
+/// Constructs a stream processor that produces an output without reading from the input, according to a function tracking its state.
 /// - `body` is the function producing the output in state-passing style.
 /// - `state` is the initial state.
 ///
 /// # Notes
 ///
-/// The function is in analogy to defining generators as the output is essentially a generator.
+/// This function is analogous to defining generators, as the output is essentially a generator.
 ///
 /// # Examples
 ///
@@ -191,12 +191,12 @@ where
     StreamProcessor::Put(x, Box::new(|| generate(body, state)))
 }
 
-/// Constructs the stream processor which applies a given closure to each element of the input stream.
+/// Constructs a stream processor that applies a given closure to each element of the input stream.
 /// - `f` is the closure to be applied.
 ///
 /// # Notes
 ///
-/// The function is in analogy to the map-function on lists which is well-known in functional programming.
+/// This function is analogous to the map function on lists, which is well-known in functional programming.
 ///
 /// # Examples
 ///

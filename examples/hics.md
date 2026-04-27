@@ -1,16 +1,16 @@
 # HICS
 
 This example implements a Heat Index Control System (hics).
-More precisely, the example implements a system to keep the heat index (a quantity depending on the real temperature and the humidity via a certain mapping) in a room located in a region with a hot and damp climate bearable.\
-The system specification is that the heat index has to be brought down periodically to a certain value within a window of tolerance depending on the daytime by first trying to dehumidify the room and if that does not suffice to also cool down the room.
-Furthermore, a thermohygrometer and a clock shall be accessible for an implementation.\
-The hics-implementation presented in this example measures temeprature and humidity as well as the time to decide if it has to take action.
-And if it actuates something, it waits for it to take effect in order to decide whether to repeat or to go idle for a period.
-Moreover it follows the structuring-suggestions from [Why Functional Programming Matters](https://www.cse.chalmers.se/~rjmh/Papers/whyfp.pdf).
+More precisely, the example implements a system to keep the heat index (a quantity depending on the real temperature and the humidity via a certain mapping) bearable in a room located in a region with a hot and damp climate.\
+The system's specification is that the heat index has to be brought down periodically to a certain value within a window of tolerance depending on the time of day, by first trying to dehumidify the room and, if that does not suffice, by also cooling down the room.
+Furthermore, a thermohygrometer and a clock must be accessible for the implementation.\
+The hics implementation presented in this example measures temperature and humidity, as well as the time, to decide if it has to take action.
+And if it actuates something, it waits for it to take effect in order to decide whether to repeat or go idle for a period.
+Moreover, it follows the structuring suggestions from [Why Functional Programming Matters](https://www.cse.chalmers.se/~rjmh/Papers/whyfp.pdf).
 There they describe how the use of higher-order functions and lazy evaluation can greatly improve the modularity of programs.
-They illustrate that point by modularizing on-demand computations of perhaps infinite objects like real numbers and game trees, exploiting that in languages with first-class functions and lazy evaluation everything is a generator in some sense.
-As the hics described above shares that 'on-demand computation' aspect - most notably, it measures (that is, reads out the thermohygrometer) on demand - these modularization techniques will apply in that case, too.
-Adapting the techniques to rspl and Rust yields a modular implementation of the addressed hics in Rust.
+They illustrate that point by modularizing on-demand computations of perhaps infinite objects like real numbers and game trees, exploiting the fact that in languages with first-class functions and lazy evaluation, everything is a generator in some sense.
+As the hics described above shares that 'on-demand computation' aspect - most notably, it measures (that is, reads out the thermohygrometer) on demand - these modularization techniques will apply in this case, too.
+Adapting the techniques to rspl and Rust yields a modular implementation of this hics in Rust.
 
 The intention of the example is to demonstrate rspl's applicability in demand-driven[^1] programming (with generators, of course).
 
@@ -18,29 +18,29 @@ Now that we have said what we are going to implement and why, let us explain our
 To this end, we split the following discussion into two parts.
 First, we introduce the general design pattern of encoding generators in rspl.
 This is done without referring to the specific example of control systems.
-Then, second, before discussing the actual hics code in place, we briefly discuss the code's overall structure.\
-So, first, rspl's stream processors can encode some sort of generator: regarding a sufficiently general definition of generator one can consider any stream processor a generator because output is generated on demand in an incremental manner.
-But even for the more specific definition of generators as functions which can remember state infromation between calls, rspl's stream processors offer an encoding.
-To understand how, first note that rspl's stream processors would implement the `Fn`-trait if Rust allowed users to arbitrarily implement that trait.
+Then, second, before discussing the actual hics code, we briefly discuss the code's overall structure.\
+So, first, rspl's stream processors can encode a sort of generator: given a sufficiently general definition of a generator, you can think of any stream processor a generator because output is generated on demand in an incremental manner.
+But even for the more specific definition of generators as functions which can remember state information between calls, rspl's stream processors offer an encoding.
+To understand how, first note that rspl's stream processors would implement the `Fn`-trait if Rust allowed users to implement that trait freely.
 This is because implementing a stream processor from `A` to `B` in rspl corresponds to defining a function from `Stream<A>` to `Stream<B>`.
-So, if `A` is the input signature and `B` the yield type of a generator, then that generator could be encoded as stream processor from `A` to `B` provided that a way to remember state information is available.
+So, if `A` is the input signature and `B` the yield type of a generator, then that generator could be encoded as a stream processor from `A` to `B`, provided that a way to remember state information is available.
 Now, the perhaps most common approach to state in functional programming - and rspl is functional programming - is state-passing style[^2].
 And, in fact, state passing is applicable to rspl's stream processors.
-One way is to construct a stream processor by a Rust function with a single parameter representing the state, returning a stream processor that captures a computation of the perhaps manipulated state within a (lazy) recursive call like in
+One way is to construct a stream processor using a Rust function with a single parameter representing the state, returning a stream processor that captures a computation of the perhaps manipulated state within a (lazy) recursive call, like so:
 ```rust
 fn generator<'a, S, A, B>(mut state: S) -> StreamProcessor<'a, A, B> {
     ...;
     StreamProcessor::get(|a: A| StreamProcessor::put(..., || generator(...state...)))
 }
 ```
-The returned stream processor of such a function is a generator where the dots are the body of that generator.
+The returned stream processor of such a function is a generator, where the dots represent the body of that generator.
 (Note that if `A` is `()`, it can make sense to omit the `get`-part.)\
 After having discussed the encoding of generators as stream processors, let us have a look at the structure of our hics implementation.
 Essentially, it consists of four parts.
 The first one is a module encapsulating general aspects of control systems.
-The second and the third part specialize to and use those aspects for heat index controlling.
-Particularly, the second part implements the control system interface while the third part is a driver responsible for executing that implementation according to the measure-on-demand strategy.
-Finally, the fourth part is the main-function simulating the hics environment and setting up the driver for the hics.
+The second and third parts specialize to and use those aspects for heat index control.
+In particular, the second part implements the control system interface, while the third part is a driver responsible for executing that implementation according to the measure-on-demand strategy.
+Finally, the fourth part is the main function simulating the hics environment and setting up the driver for the hics.
 
 Let us now walk through the code together.
 
@@ -54,7 +54,7 @@ mod control {
     use std::time::Duration;
 
     // This is a definition of control systems. Importantly, it requires a `meter` to generate
-    // measurements on demand and this is statically enforced by the typing.
+    // measurements on demand, and this is statically enforced by the typing.
     pub trait System<'a, Space> {
         fn meter(&self) -> StreamProcessor<'a, (), Space>;
         fn reference(&self) -> f64;
@@ -156,7 +156,7 @@ struct HeatIndexSpace {
 }
 
 // This type defines the output signals of the hics. A signal is either status information
-// (`Show(...)`) or orders for the actuator to execute (`Dehumidfy` and `Cool`).
+// (`Show(...)`) or orders for the actuator to execute (`Dehumidify` and `Cool`).
 enum HeatIndexSignal {
     Show(Time, HeatIndex),
     Dehumidify,
@@ -345,11 +345,11 @@ fn main() {
 
 Finally, let us conclude with the key take-away:
 rspl can encode generators and is hence suited for demand-driven programming.
-However, it is not so clear why to use rspl to encode generators in general.
+However, it is not so clear why one should use rspl to encode generators in general.
 Indeed, this is also not quite what we wanted to show.
-The idea is rather to show that rspl's stream processors can naturally incorporate demand-driven programming making them particularly useful to stream-processing problems with demand-driven aspects.
+The idea is rather to show that rspl's stream processors can naturally incorporate demand-driven programming, making them particularly useful for stream-processing problems with demand-driven aspects.
 It might be that the hics implemented here is not the best possible example to do so.
-But it is the best we could come up with as of yet which is real-world enough while still being focused on the `put`-construct of rspl.
+But it is the best we could come up with as of yet that is real-world enough, while still being focused on the `put`-construct of rspl.
 
 [^1]: Look at [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf) for some more explanation on that term.
-[^2]: Also see the concept of monads which kind of subsumes foobar-passing style.
+[^2]: Also see the concept of monads, which kind of subsumes foobar-passing style.

@@ -1,13 +1,13 @@
-//! rspl is a stream-processor language based on the one discussed in [Generalising Monads to Arrows](https://www.sciencedirect.com/science/article/pii/S0167642399000234) using Rust as meta-language.
+//! rspl is a stream-processor language based on the one discussed in [Generalising Monads to Arrows](https://www.sciencedirect.com/science/article/pii/S0167642399000234) using Rust as a meta-language.
 //!
 //! ## Design
 //!
-//! Essentially, rspl is a way to encode functions from streams to streams such that control is syntactically explicit (like in ordinary continuation-passing style) refining the orthodox functional approach to stream processing with combinators like 'map'.
+//! Essentially, rspl is a way to encode functions from streams to streams such that control is syntactically explicit (like in ordinary continuation-passing style), refining the orthodox functional approach to stream processing with combinators like 'map'.
 //! More precisely, the idea of this stream-processor language is to split the processing of streams into two parts:
-//! One part for reading (getting) the first element of an input stream to direct the further processing.
+//! One part for reading (getting) the first element of an input stream to direct further processing.
 //! Another part for writing (putting) something to the output stream and offering to process some input stream if needed.
-//! Combining these parts in various ways allows to flexibly construct stream processors as programs.
-//! The following graphic illustrates how those two different kinds of stream processors ('getting' and 'putting') work (whereas a textual description is contained in the docs of [`StreamProcessor`]):
+//! Combining these parts in various ways allows you to flexibly construct stream processors as programs.
+//! The following graphic illustrates how those two different kinds of stream processors ('getting' and 'putting') work (a textual description is provided in the docs of [`StreamProcessor`]):
 //!
 //! <pre>
 //! h--t1--t2--t3--...                   ha--t1--t2--t3--...
@@ -41,27 +41,27 @@
 //! </pre>
 //!
 //! Remarkably, the language constructs are somewhat dual and loosely correspond to (dual) programming paradigms:
-//! - The `Get`-construct relates to event-driven programming as it reacts to input (events) eagerly.
-//! - The `Put`-construct relates to demand-driven[^1] programming as it generates output (demands) iteratively by need.
+//! - The `Get`-construct relates to event-driven programming, as it eagerly reacts to input (events).
+//! - The `Put`-construct relates to demand-driven[^1] programming, as it iteratively generates output (demands) as needed.
 //!
-//! This will be discussed further in the [Examples](#examples)-section.
+//! This will be discussed further in the [Examples](#examples) section.
 //!
 //! ## Usage
 //!
-//! To program a rspl-[`StreamProcessor`] you just have to compose the constructors [`StreamProcessor::Get`]/[`get`](`StreamProcessor::get`) and [`StreamProcessor::Put`]/[`put`](`StreamProcessor::put`) in the right way.
-//! For a somewhat more high-level programming experience you might wish to look at the [`combinators`]-module.
-//! The program can then be evaluated with the [`eval`](`StreamProcessor::eval`)-method on some kind of input stream.
-//! The 'kind' of input stream is either your own implementation of the [`Stream`]-interface or one
-//! from the submodules of the [`streams`]-module.
-//! Either way, as result, evaluation produces an [`InfiniteList`] (lazily).
-//! To observe streams - and i.p. infinite lists - you can destruct them with the [`head`](`Stream::head`)- and [`tail`](`Stream::tail`)-methods of the stream interface.
-//! Moreover, there are various functions helping with the destruction and construction of streams.
+//! To program an rspl-[`StreamProcessor`], you just have to compose the constructors [`StreamProcessor::Get`]/[`get`](`StreamProcessor::get`) and [`StreamProcessor::Put`]/[`put`](`StreamProcessor::put`) in the right way.
+//! For a somewhat more high-level programming experience, you might wish to look at the [`combinators`] module.
+//! The program can then be evaluated with the [`eval`](`StreamProcessor::eval`) method on some kind of input stream.
+//! The 'kind' of input stream is either your own implementation of the [`Stream`] interface or one
+//! from the submodules of the [`streams`] module.
+//! Either way, as a result, evaluation produces an [`InfiniteList`] (lazily).
+//! To observe streams - and in particular infinite lists - you can deconstruct them with the [`head`](`Stream::head`) and [`tail`](`Stream::tail`) methods of the stream interface.
+//! Moreover, there are various functions that help with the destruction and construction of streams.
 //!
 //! # Examples
 //!
-//! As alluded to in the [Design](#design)-section, rspl supports orthodox 'combinator-driven' stream processing as it is known from list processing with combinators like [`compose`](`combinators::compose`), [`filter`](`combinators::filter`) and [`map`](`combinators::map`).
+//! As alluded to in the [Design](#design) section, rspl supports orthodox 'combinator-driven' stream processing, as is known from list processing with combinators like [`compose`](`combinators::compose`), [`filter`](`combinators::filter`), and [`map`](`combinators::map`).
 //! For example, it is possible to first filter some 'bad' elements out of a stream in order to safely iterate some function over the resulting stream afterwards in a combinatorial way.
-//! Such a [usage](#usage) of rspl looks like:
+//! Such usage of rspl looks like this:
 //!
 //! ```
 //! use rspl::combinators::{compose, filter, map};
@@ -80,7 +80,7 @@
 //!
 //! More interestingly, rspl can also serve as a framework for the nifty idea of
 //! - event-driven programming with state machines as suggested [here](https://barrgroup.com/Embedded-Systems/How-To/State-Machines-Event-Driven-Systems).
-//!   Abstractly, that [usage](#usage) of rspl looks as follows:
+//!   Abstractly, this usage of rspl looks as follows:
 //!
 //!   ```
 //!   use rspl::streams::infinite_lists::InfiniteList;
@@ -124,11 +124,11 @@
 //!   assert!(event_loop.head());
 //!   ```
 //!
-//!   A slightly more concrete example using that pattern is available as [integration test](https://github.com/shtsoft/rspl/blob/master/tests/events.rs).
-//!   And a full-blown concrete example of a pelican crossing can be found [here (as .md file)](https://github.com/shtsoft/rspl/blob/master/examples/pelican.md) and [here (as .rs file)](https://github.com/shtsoft/rspl/blob/master/examples/pelican.rs).
-//!   Notably, it uses rspl to encode effectful hierarchical state machines with a capability-passing inspired effect-handling mechanism.
+//!   A slightly more concrete example using that pattern is available as an [integration test](https://github.com/shtsoft/rspl/blob/master/tests/events.rs).
+//!   A full-blown concrete example of a pelican crossing can be found [here (as an .md file)](https://github.com/shtsoft/rspl/blob/master/examples/pelican.md) and [here (as an .rs file)](https://github.com/shtsoft/rspl/blob/master/examples/pelican.rs).
+//!   Notably, it uses rspl to encode effectful hierarchical state machines with a capability-passing-inspired effect-handling mechanism.
 //! - demand-driven programming with generators as suggested [here](https://www.cse.chalmers.se/~rjmh/Papers/whyfp.pdf).
-//!   Abstractly, that [usage](#usage) of rspl looks as follows:
+//!   Abstractly, this usage of rspl looks as follows:
 //!
 //!   ```
 //!   use rspl::streams::infinite_lists::InfiniteList;
@@ -164,10 +164,10 @@
 //!   assert!(generations.head());
 //!   ```
 //!
-//!   A slightly more concrete example using that pattern is available as [integration test](https://github.com/shtsoft/rspl/blob/master/tests/demands.rs).
-//!   And a full-blown concrete example of a heat index control system can be found [here (as .md file)](https://github.com/shtsoft/rspl/blob/master/examples/hics.md) and [here (as .rs file)](https://github.com/shtsoft/rspl/blob/master/examples/hics.rs).
+//!   A slightly more concrete example using that pattern is available as an [integration test](https://github.com/shtsoft/rspl/blob/master/tests/demands.rs).
+//!   A full-blown concrete example of a heat index control system can be found [here (as an .md file)](https://github.com/shtsoft/rspl/blob/master/examples/hics.md) and [here (as an .rs file)](https://github.com/shtsoft/rspl/blob/master/examples/hics.rs).
 //!
-//! [^1]: Look at [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf) for some more explanation on that term.
+//! [^1]: See [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf) for more explanation of this term.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
@@ -181,18 +181,18 @@ use streams::Stream;
 
 use alloc::boxed::Box;
 
-/// A type of thunks of type `T`.
+/// A type for thunks of type `T`.
 type Lazy<'a, T> = dyn FnOnce() -> T + 'a;
 
 /// Terms of a language describing the domain of stream processors, that is, terms which can be interpreted to turn streams of type `A` into streams of type `B`.
 pub enum StreamProcessor<'a, A: 'a, B> {
-    /// A stream processor which first reads the `A` from the head of the input stream and subsequently applies its function argument to that element yielding a stream processor.
-    /// The resulting stream processor is then used to process the input stream further depending on its shape: if it is a
+    /// A stream processor which first reads the `A` from the head of the input stream and subsequently applies its function argument to that element, yielding a stream processor.
+    /// The resulting stream processor is then used to process the input stream further, depending on its shape: if it is a
     /// - [`Get`](`StreamProcessor::Get`), it is applied to the tail of the input stream.
     /// - [`Put`](`StreamProcessor::Put`), it is applied to the whole input stream.
     Get(Box<dyn FnOnce(A) -> StreamProcessor<'a, A, B> + 'a>),
     /// A stream processor which writes the `B` from its first argument to the output stream.
-    /// Then, to construct the rest of the output stream, it uses its second argument to process the input stream depending on its shape: if it is a
+    /// Then, to construct the rest of the output stream, it uses its second argument to process the input stream, depending on its shape: if it is a
     /// - [`Get`](`StreamProcessor::Get`), it is applied to the tail of the input stream.
     /// - [`Put`](`StreamProcessor::Put`), it is applied to the whole input stream.
     Put(B, Box<Lazy<'a, StreamProcessor<'a, A, B>>>),
@@ -220,13 +220,13 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
 }
 
 impl<'a, A, B> StreamProcessor<'a, A, B> {
-    /// Evaluates `self` on an input stream essentially implementing a semantic of [`StreamProcessor<A, B>`].
+    /// Evaluates `self` on an input stream, essentially implementing the semantics of [`StreamProcessor<A, B>`].
     /// - `stream` is the input stream.
     ///
     /// # Panics
     ///
     /// A panic may occur if
-    /// - the stream processor contains Rust-terms which can panic.
+    /// - the stream processor contains Rust terms that can panic.
     /// - the respective implementation of [`Stream`] can panic.
     ///
     /// # Notes
@@ -253,13 +253,13 @@ impl<'a, A, B> StreamProcessor<'a, A, B> {
         A: Clone,
     {
         // This implementation deviates from the original for two reasons:
-        // - Rust does not guarantee tail-recursion elimination and rspl wants to prevent
-        //   stack-overflows as much as possible. Therefore the loop in lieu of recursion.
+        // - Rust does not guarantee tail-recursion elimination, and rspl wants to prevent
+        //   stack overflows as much as possible. Therefore, it uses a loop in lieu of recursion.
         // - There are streams rspl programs can operate on where taking the tail can block, as
-        //   opposed to the original implementation. So, the question arising here is when to take
-        //   the tail of the input. The answer is, as late as possible, that is, only if the next
+        //   opposed to the original implementation. So, the question arises here: when should we take
+        //   the tail of the input? The answer is as late as possible—that is, only if the next
         //   step is 'getting'. Because then 'putting' is not hindered. And this is as it should be
-        //   if taking rspl's idea of seperating input processing from output processing serious.
+        //   if taking rspl's idea of separating input processing from output processing seriously.
         loop {
             match self {
                 StreamProcessor::Get(f) => {

@@ -1,14 +1,14 @@
 //&# rspl Heapless
 //&
-//&This example explores the viability of an alternative implementation of rspl based on something like closure conversion to avoid the use of a heap.
-//&Such an implementation would make rspl better suited for embedded systems as it could not only forgo the standard library but also an allocator.
-//&In the rest of this file we explain and implement that heapless approach to draw a tentative conclusion on its viability.
+//&This example explores the viability of an alternative implementation of rspl based on something like closure conversion to avoid using a heap.
+//&Such an implementation would make rspl better suited for embedded systems, as it could forgo not only the standard library but also an allocator.
+//&In the rest of this file, we explain and implement this heapless approach to draw a tentative conclusion on its viability.
 
-//&rspl uses the heap essentially for laziness when it thunks stream processing and tails of streams.
-//&This is because in those cases Rust does not statically determine the size of the thunks.
+//&rspl uses the heap essentially for laziness when it thunks stream processing and the tails of streams.
+//&This is because, in those cases, Rust does not statically determine the size of the thunks.
 //&Assisting Rust in that regard by converting those closures eliminates the need for a heap.\
 //&What we mean by converting closures here can be understood by looking at the example of streams as codata[^1].
-//&In Agda one defines streams of type `X` (intensionally) by the codata type
+//&In Agda, one defines streams of type `X` (intensionally) by the codata type:
 //&```agda
 //&record StreamX : Set where
 //&  coinductive
@@ -16,15 +16,15 @@
 //&    head : X
 //&    tail : StreamX
 //&```
-//&This can be read as 'any object from which one can observe something of type `X` (the `head`) and a something of type `StreamX` (the `tail`) is a `StreamX`'.
-//&Defining a stream of `X`s can then be done by copatttern matching, that is, by specifying what the `head` and the `tail` of the stream shall be.
-//&For example, given some `x : X` one can construct the constant stream of `x` by the comatch
+//&This can be read as 'any object from which one can observe something of type `X` (the `head`) and something of type `StreamX` (the `tail`) is a `StreamX`'.
+//&Defining a stream of `X`s can then be done by copattern matching - that is, by specifying what the `head` and the `tail` of the stream should be.
+//&For example, given some `x : X`, one can construct the constant stream of `x` by the comatch:
 //&```agda
 //&constant : X -> StreamX
 //&head (constant x) = x
 //&tail (constant x) = constant x
 //&```
-//&Now, to encode `constant` in Rust one can convert that generalized closure by making its environment (its domain) explicit by means of a struct (as usual), and implement the `Stream<X>`-trait accordingly:
+//&Now, to encode `constant` in Rust, one can convert that generalized closure by making its environment (its domain) explicit via a struct (as usual) and implement the `Stream<X>`-trait accordingly:
 
 //&```rust
 trait Stream<X> {
@@ -48,7 +48,7 @@ impl<X> Stream<X> for ComatchConstant<X> {
 //&```
 
 //&This also works in greater generality for mutually recursive codata.
-//&For ordinary stream processors in Agda
+//&For ordinary stream processors in Agda:
 //&```agda
 //&data StreamProcessor : Set where
 //&  get : (A -> StreamProcessor) -> StreamProcessor
@@ -59,7 +59,7 @@ impl<X> Stream<X> for ComatchConstant<X> {
 //&  field
 //&    force : StreamProcessor
 //&```
-//&we get the following rspl equivalent (if we also generalize `X -> Y` to the intensional definition of function with the help of codata) in Rust:
+//&we get the following rspl equivalent (if we also generalize `X -> Y` to the intensional definition of a function with the help of codata) in Rust:
 
 //&```rust
 enum StreamProcessor<A, B, F, L>
@@ -156,7 +156,7 @@ where
 }
 //&```
 
-//&Then, for a proof of concept we can reimplement the `map`-combinator and apply it to some stream:
+//&Then, for a proof of concept, we can reimplement the `map`-combinator and apply it to some stream:
 
 //&```rust
 struct ComatchMap<'a, A: 'a, B: 'a, F>
@@ -217,7 +217,6 @@ fn main() {
 //&```
 
 //&The tentative conclusion is that while the approach seems doable, it has significant negative consequences: stream processors become harder to understand and more tedious to write.
-//&Therefore, the approach is impractical.
-//&At least, without a better language frontend.
+//&Therefore, the approach is impractical - at least without a better language frontend.
 
-//&[^1]: A modern take on OOP generalizing closures (see e.g. [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf)).
+//&[^1]: A modern take on OOP generalizing closures (see e.g., [Codata in Action](https://www.microsoft.com/en-us/research/uploads/prod/2020/01/CoDataInAction.pdf)).
